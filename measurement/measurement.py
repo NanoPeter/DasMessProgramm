@@ -5,7 +5,8 @@ from enum import Enum, auto
 
 REGISTRY = {}
 
-def Register(cls):
+
+def register(cls):
     """Decorator to register new measurement methods.
 
     This function should only be used as a decorator for measurement classes
@@ -23,8 +24,9 @@ def Register(cls):
         class which was given in the args
     """
     if issubclass(cls, AbstractMeasurement):
-        registry[cls.__name__] = cls
+        REGISTRY[cls.__name__] = cls
     return cls
+
 
 class AbstractInput(object):
     """Represents a generic Input which the measurement class will return
@@ -35,7 +37,7 @@ class AbstractInput(object):
 
         Args:
             fullname:
-            type: expected type of input (float, int, string)
+            expected_type: expected type of input (float, int, string)
             default:
         """
         self.__type = expected_type
@@ -52,19 +54,23 @@ class AbstractInput(object):
 
     @property
     def fullname(self):
-        return fullname
+        return self.__fullname
+
 
 class IntegerInput(AbstractInput):
     def __init__(self, fullname: str, default: int = 0):
         super().__init__(fullname, int, default)
 
+
 class FloatInput(AbstractInput):
     def __init__(self, fullname: str, default: float = 0.0):
         super().__init__(fullname, float, default)
 
+
 class StringInput(AbstractInput):
     def __init__(self, fullname: str, default: str = ''):
         super().__init__(fullname, str, default)
+
 
 class Contacts(Enum):
     TWO = auto()
