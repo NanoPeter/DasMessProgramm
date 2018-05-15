@@ -14,6 +14,7 @@ from measurement.measurement import SignalInterface
 class SignalDataAcquisition(QtCore.QObject, SignalInterface):
     finished = QtCore.pyqtSignal(object)
     data = QtCore.pyqtSignal(object)
+    started = QtCore.pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -24,6 +25,9 @@ class SignalDataAcquisition(QtCore.QObject, SignalInterface):
     def emit_data(self, something):
         self.data.emit(something)
 
+    def emit_started(self):
+        self.started.emit()
+
 
 class Main(QtWidgets.QMainWindow):
 
@@ -31,6 +35,8 @@ class Main(QtWidgets.QMainWindow):
         super(Main, self).__init__()
 
         self.__signal_interface = SignalDataAcquisition()
+        self.__signal_interface.finished.connect(self.__finished)
+        self.__signal_interface.data.connect(self.__new_data)
 
         self.__init_gui()
 
@@ -51,12 +57,7 @@ class Main(QtWidgets.QMainWindow):
         self.__tb_window = TableWindow()
         self.__mdi.addSubWindow(self.__tb_window)
 
-        self.df = pd.DataFrame({'U': [1, 2, 3, 4, 5, 6],
-                           'I': [-3, 2, -1, 4, 1, 2],
-                           'Datetime': [datetime.now(), datetime.now(), datetime.now(),
-                                        datetime.now(), datetime.now(), datetime.now()]})
-
-        self.__tb_window.update_data(self.df)
+        self.__df = pd.DataFrame()
 
         self.__plot_window = PlotWindow()
         self.__mdi.addSubWindow(self.__plot_window)
@@ -67,18 +68,25 @@ class Main(QtWidgets.QMainWindow):
         self.__measurement = measurement.REGISTRY[x](self.__signal_interface)
         self.__create_input_ui(self.__measurement.inputs)
 
+        for input in self.__measurement.inputs:
+            print(input)
+
+        self.__df = pd.DataFrame()
+
+        if x == 'Dummy Measurement':
+            self.__measurement.initialize('/', (1, 2), n=50)
+            self.__measurement.start()
+
     def __create_input_ui(self, inputs):
         pass
 
-    def __finished(self, data_object):
-        print(type(data_object))
+    def __finished(self, data_dict):
+        pass
 
-        data_type = type(data_object)
-
-        if data_type in self.__handle_strategies:
-            self.__handle_strategies[data_type](data_object)
-        else:
-            print(data_object)
+    def __new_data(self, data_dict):
+        self.__df = self.__df.append(data_dict, ignore_index=True)
+        self.__plot_window.update_data(self.__df)
+        self.__tb_window.update_data(self.__df)
 
 
 if __name__ == '__main__':

@@ -26,11 +26,9 @@ class PlotWidget(FigureCanvas):
         :param y_data:
         :return:
         """
-        print(x_data, y_data)
         self._axes.cla()
         self._axes.plot(x_data, y_data)
-        #TODO: draw verursacht Absturz, aber ohne draw gibt es keine instantane Aktualisierung :(
-        #self._axes.draw()
+        self.draw()
 
 
 class PlotWindow(QMdiSubWindow):
@@ -48,4 +46,5 @@ class PlotWindow(QMdiSubWindow):
         :param data: A Pandas DataFrame with the containing data
         :return:
         """
-        self._plot_widget.update_figure(list(data.ix[:, 1]), list(data.ix[:, 2]))
+        if data.columns.size > 1:
+            self._plot_widget.update_figure(list(data.ix[:, 0]), list(data.ix[:, 1]))

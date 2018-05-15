@@ -113,6 +113,7 @@ class AbstractMeasurement(Thread):
 
     """
     def __init__(self, signal_interface: SignalInterface):
+        super().__init__()
         self._number_of_contacts = Contacts.TWO
         self._signal_interface = signal_interface
 
