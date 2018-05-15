@@ -77,5 +77,5 @@ class TableWindow(QMdiSubWindow):
 
     @property
     def selected_columns(self):
-        self.__table.selectionModel().selected
+        return 0
 
