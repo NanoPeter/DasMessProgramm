@@ -2,6 +2,7 @@ from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QApplication
 
 from windows.table_window import TableWindow
+from windows.plot_window import PlotWindow
 import pandas as pd
 
 from datetime import datetime
@@ -50,12 +51,15 @@ class Main(QtWidgets.QMainWindow):
         self.__tb_window = TableWindow()
         self.__mdi.addSubWindow(self.__tb_window)
 
-        df = pd.DataFrame({'U': [1, 2, 3, 4, 5, 6],
+        self.df = pd.DataFrame({'U': [1, 2, 3, 4, 5, 6],
                            'I': [-3, 2, -1, 4, 1, 2],
                            'Datetime': [datetime.now(), datetime.now(), datetime.now(),
                                         datetime.now(), datetime.now(), datetime.now()]})
 
-        self.__tb_window.update_data(df)
+        self.__tb_window.update_data(self.df)
+
+        self.__plot_window = PlotWindow()
+        self.__mdi.addSubWindow(self.__plot_window)
 
     def __menu_measurement_selected(self, x):
         print('DEBUG', 'selected', x, measurement.REGISTRY[x])
