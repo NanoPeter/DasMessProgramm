@@ -61,6 +61,8 @@ class TableWindow(QMdiSubWindow):
     def __init__(self):
         super().__init__()
 
+        self.setWindowFlags(Qt.WindowTitleHint | Qt.CustomizeWindowHint)
+
         self.__table = QTableView()
 
         self.setWidget(self.__table)

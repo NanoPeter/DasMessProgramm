@@ -1,32 +1,13 @@
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QApplication
-from threading import Thread
 
 from windows.table_window import TableWindow
 import pandas as pd
 
 from datetime import datetime
-from time import sleep
 
-
-class Test:
-    """A Test class to test if qt signals are able to transport nonstandard objects
-    """
-    def __init__(self):
-        self.foo = 'bar'
-
-    def run(self, arg1):
-        print(arg1, self.foo)
-
-
-class SignalInterface:
-    """An typical
-    """
-    def emit_finished(self, data):
-        NotImplementedError()
-
-    def emit_data(self, data):
-        NotImplementedError()
+import measurement
+from measurement.measurement import SignalInterface
 
 
 class SignalDataAcquisition(QtCore.QObject, SignalInterface):
@@ -43,40 +24,24 @@ class SignalDataAcquisition(QtCore.QObject, SignalInterface):
         self.data.emit(something)
 
 
-class Emitter(Thread):
-    def __init__(self, signal_interface):
-        super().__init__()
-
-        self.signal_interface = signal_interface
-
-    def run(self):
-        self.signal_interface.emit_data('some data string')
-        sleep(2)
-        self.signal_interface.emit_finished(Test())
-
 class Main(QtWidgets.QMainWindow):
 
     def __init__(self):
         super(Main, self).__init__()
 
-        si = SignalDataAcquisition()
-
-        self.__handle_strategies = {Test: self.__handle_test}
-
-        self.e = Emitter(si)
-        si.finished.connect(self.__finished)
-        self.e.start()
+        self.__signal_interface = SignalDataAcquisition()
 
         self.__init_gui()
 
     def __init_gui(self):
+        self.setWindowTitle('DasMessProgramm')
         bar = self.menuBar()
         method = bar.addMenu('Method')
 
-        registry = ['SMUTwoProbe', 'LockInFourProbe']
+        registry = measurement.REGISTRY.keys()
 
         for entry in registry:
-            method.addAction(entry, lambda x=entry: self.__menu_clicked(x))
+            method.addAction(entry, lambda x=entry: self.__menu_measurement_selected(x))
 
         self.__mdi = QtWidgets.QMdiArea()
 
@@ -92,17 +57,14 @@ class Main(QtWidgets.QMainWindow):
 
         self.__tb_window.update_data(df)
 
-    def __menu_clicked(self, x):
-        df = pd.DataFrame({'U': [1, 2, 3, 4, 5, 6, 7],
-                           'I': [1, 1, 1, 1, 1, 1, 1],
-                           'Datetime': [datetime.now(), datetime.now(), datetime.now(),
-                                        datetime.now(), datetime.now(), datetime.now(), datetime.now()]})
+    def __menu_measurement_selected(self, x):
+        print('DEBUG', 'selected', x, measurement.REGISTRY[x])
 
-        self.__tb_window.update_data(df)
-        print(x)
+        self.__measurement = measurement.REGISTRY[x](self.__signal_interface)
+        self.__create_input_ui(self.__measurement.inputs)
 
-    def __handle_test(self, test):
-        test.run('test')
+    def __create_input_ui(self, inputs):
+        pass
 
     def __finished(self, data_object):
         print(type(data_object))
@@ -113,8 +75,6 @@ class Main(QtWidgets.QMainWindow):
             self.__handle_strategies[data_type](data_object)
         else:
             print(data_object)
-
-
 
 
 if __name__ == '__main__':

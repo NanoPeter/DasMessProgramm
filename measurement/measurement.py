@@ -1,8 +1,9 @@
 """
 
 """
-from enum import Enum, auto
+from enum import Enum
 from threading import Thread
+from datetime import datetime
 
 REGISTRY = {}
 
@@ -32,7 +33,7 @@ def register(name):
     return register_wrapper
 
 
-class AbstractInput(object):
+class AbstractValue(object):
     """Represents a generic input which the measurement class will return
     """
 
@@ -62,44 +63,76 @@ class AbstractInput(object):
         return self.__fullname
 
 
-class IntegerInput(AbstractInput):
+class IntegerValue(AbstractValue):
     def __init__(self, fullname: str, default: int = 0):
         super().__init__(fullname, int, default)
 
 
-class FloatInput(AbstractInput):
+class FloatValue(AbstractValue):
     def __init__(self, fullname: str, default: float = 0.0):
         super().__init__(fullname, float, default)
 
 
-class StringInput(AbstractInput):
+class BooleanValue(AbstractValue):
+    def __init__(self, fullname: str, default: bool = False):
+        super().__init__(fullname, bool, default)
+
+
+class StringValue(AbstractValue):
     def __init__(self, fullname: str, default: str = ''):
         super().__init__(fullname, str, default)
+
+
+class DatetimeValue(AbstractValue):
+    def __init__(self, fullname: str):
+        super().__init__(fullname, datetime, datetime.now())
 
 
 class Contacts(Enum):
     """Gives
     """
-    TWO = auto()
-    FOUR = auto()
+    TWO = 2
+    FOUR = 4
+
+
+class SignalInterface:
+    """An typical
+    """
+    def emit_finished(self, data):
+        NotImplementedError()
+
+    def emit_data(self, data):
+        NotImplementedError()
+
+    def emit_started(self):
+        NotImplemented()
 
 
 class AbstractMeasurement(Thread):
     """
 
     """
-    def __init__(self):
+    def __init__(self, signal_interface: SignalInterface):
         self._number_of_contacts = Contacts.TWO
+        self._signal_interface = signal_interface
 
     @property
     def inputs(self):
         return {}
 
     @property
+    def outputs(self):
+        return {}
+
+    @property
+    def recommended_plots(self):
+        return []
+
+    @property
     def number_of_contacts(self) -> Contacts:
         return self._number_of_contacts
 
-    def initialize(self, **kwargs):
+    def initialize(self, path, contacts, **kwargs):
         NotImplementedError()
 
     def run(self):
