@@ -1,0 +1,28 @@
+from .measurement import register, AbstractMeasurement, Contacts
+from .measurement import FloatInput, IntegerInput
+
+
+@register('SourceMeter two probe sweep')
+class SMU2Probe(AbstractMeasurement):
+    def __init__(self):
+        super().__init__()
+        self._number_of_contacts = Contacts.TWO
+
+    @property
+    def inputs(self):
+        return {'v': FloatInput('Maximum Voltage', default=0.0),
+                'i': FloatInput('Current Limit', default=1e-6),
+                'nplc': IntegerInput('')}
+
+    def initialize(self, v=0.0, i=1e-6, nplc=3):
+        """
+
+        :param v:
+        :param i:
+        :param nplc:
+        :return:
+        """
+        pass
+
+    def run(self):
+        pass

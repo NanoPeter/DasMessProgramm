@@ -2,43 +2,45 @@
 
 """
 from enum import Enum, auto
+from threading import Thread
 
 REGISTRY = {}
 
 
-def register(cls):
-    """Decorator to register new measurement methods.
+def register(name):
+    """Decorator to register new measurement methods and give them global names.
 
     This function should only be used as a decorator for measurement classes
     which inherit the AbstractMeasurement class.
 
-    Usage:
-    @Register
+    :usage:
+    @register('My Measurement')
     class MyMeasurement(AbstractMeasurement):
         ....
 
-    Args:
-        cls: measurement class to be registered
-
-    Returns:
-        class which was given in the args
+    :param name: name of the measurement class
+    :return: another decorator to register the class
     """
-    if issubclass(cls, AbstractMeasurement):
-        REGISTRY[cls.__name__] = cls
-    return cls
+    def register_wrapper(cls):
+        """
+        :param cls: measurement class to be registered
+        :return: the class which was given by the input
+        """
+        if issubclass(cls, AbstractMeasurement):
+            REGISTRY[name] = cls
+        return cls
+    return register_wrapper
 
 
 class AbstractInput(object):
-    """Represents a generic Input which the measurement class will return
+    """Represents a generic input which the measurement class will return
     """
 
     def __init__(self, fullname: str, expected_type: type, default):
-        """Initialises the Input class
-
-        Args:
-            fullname:
-            expected_type: expected type of input (float, int, string)
-            default:
+        """
+        :param fullname: name which should be displayed
+        :param expected_type:
+        :param default: default value
         """
         self.__type = expected_type
         self.__default = default
@@ -46,6 +48,9 @@ class AbstractInput(object):
 
     @property
     def type(self) -> type:
+        """
+        :return:
+        """
         return self.__type
 
     @property
@@ -73,26 +78,29 @@ class StringInput(AbstractInput):
 
 
 class Contacts(Enum):
+    """Gives
+    """
     TWO = auto()
     FOUR = auto()
 
 
-class AbstractMeasurement:
+class AbstractMeasurement(Thread):
+    """
 
+    """
     def __init__(self):
         self._number_of_contacts = Contacts.TWO
 
     @property
-    def input(self):
+    def inputs(self):
         return {}
 
     @property
     def number_of_contacts(self) -> Contacts:
         return self._number_of_contacts
 
-    def start(self, **kwargs):
-        print(kwargs)
-        raise NotImplementedError()
+    def initialize(self, **kwargs):
+        NotImplementedError()
 
     def run(self):
         pass
