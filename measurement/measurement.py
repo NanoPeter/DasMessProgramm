@@ -1,7 +1,7 @@
 """
 
 """
-from enum import Enum, auto
+from enum import Enum
 from threading import Thread
 
 REGISTRY = {}
@@ -80,8 +80,8 @@ class StringInput(AbstractInput):
 class Contacts(Enum):
     """Gives
     """
-    TWO = auto()
-    FOUR = auto()
+    TWO = 0
+    FOUR = 1
 
 
 class AbstractMeasurement(Thread):

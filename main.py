@@ -56,6 +56,7 @@ class Emitter(Thread):
         sleep(2)
         self.signal_interface.emit_finished(Test())
 
+        
 class Main(QtWidgets.QMainWindow):
 
     input_validators = {int: QtGui.QIntValidator,  # Qt-internal checks for different input widget types
@@ -74,7 +75,7 @@ class Main(QtWidgets.QMainWindow):
         self.e.start()
 
         self.__directory_name = ""
-        self.__dynamic_inputs = list()  # type: List[QtWidgets.QLineEdit]
+        self.__dynamic_inputs = dict()  # type: Dict[str, QtWidgets.QLineEdit]
         
         self.__init_gui()
 
@@ -115,7 +116,7 @@ class Main(QtWidgets.QMainWindow):
         self.__file_name_display.setText(self.__directory_name)
         file_name_button = QtWidgets.QPushButton()
         file_name_layout.addWidget(file_name_button)
-        file_name_button.setText("Select directory...")
+        file_name_button.setText("Browse...")
         file_name_button.clicked.connect(self.__set_directory_name)
 
         # This layout contains the dynamically managed inputs:
@@ -179,7 +180,7 @@ class Main(QtWidgets.QMainWindow):
             element_layout.addWidget(QtWidgets.QLabel(element_name))  # Header text
 
             element_input_field = QtWidgets.QLineEdit()
-            self.__dynamic_inputs.append(element_input_field)
+            self.__dynamic_inputs[element] = element_input_field
             element_layout.addWidget(element_input_field)
             
             # Validate the input field if it is numerical:
@@ -191,7 +192,17 @@ class Main(QtWidgets.QMainWindow):
             element_default = inputs[element].default
             element_input_field.setText(str(element_default))
 
-            
+    def __get_input_arguments(self):
+        """Return a dictionary of input names with their user-set values.
+
+        Names are not the full names of an input but their dictionary index.
+        """
+        input_values = dict()
+        for name in self.__dynamic_inputs:
+            input_values[name] = self.__dynamic_inputs[name].text()
+
+        return input_values
+    
     @QtCore.pyqtSlot()
     def __set_directory_name(self):
         """Open a dialogue to change the output directory."""
