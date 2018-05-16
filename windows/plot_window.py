@@ -10,9 +10,14 @@ from pandas import DataFrame
 
 
 class PlotWidget(FigureCanvas):
-    def __init__(self, parent=None, width=5, height=4, dpi=100):
+
+    def __init__(self, parent=None, width=5, height=4, dpi=100, title='', x_label='', y_label=''):
         self._figure = Figure(figsize=(width, height), dpi=dpi)
         self._axes = self._figure.add_subplot(111)
+
+        self._title = title
+        self._x_label = x_label
+        self._y_label = y_label
 
         super().__init__(self._figure)
         self.setParent(parent)
@@ -27,6 +32,9 @@ class PlotWidget(FigureCanvas):
         :return:
         """
         self._axes.cla()
+        self._axes.set_title(self._title)
+        self._axes.set_xlabel(self._x_label)
+        self._axes.set_ylabel(self._y_label)
         self._axes.plot(x_data, y_data)
         self.draw()
 
@@ -34,10 +42,12 @@ class PlotWidget(FigureCanvas):
 class PlotWindow(QMdiSubWindow):
     """This is a simple sub window to show a plot of data
     """
-    def __init__(self):
+    def __init__(self, title='', x_label='', y_label=''):
         super().__init__()
 
-        self._plot_widget = PlotWidget()
+        self.setWindowTitle(title)
+
+        self._plot_widget = PlotWidget(title=title, x_label=x_label, y_label=y_label)
         self.setWidget(self._plot_widget)
 
     def update_data(self, data: DataFrame):

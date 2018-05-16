@@ -23,7 +23,7 @@ class SMU2Probe(AbstractMeasurement):
 
     @property
     def recommended_plots(self):
-        return [('v', 'i')]
+        return {'dummy': ('v', 'i')}
 
     def initialize(self, path, contacts, v=0.0, i=1e-6, n=100, nplc=3):
         """

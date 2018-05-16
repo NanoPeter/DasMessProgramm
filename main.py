@@ -59,8 +59,7 @@ class Main(QtWidgets.QMainWindow):
 
         self.__df = pd.DataFrame()
 
-        self.__plot_window = PlotWindow()
-        self.__mdi.addSubWindow(self.__plot_window)
+        self.__plot_windows = {}
 
     def __menu_measurement_selected(self, x):
         print('DEBUG', 'selected', x, measurement.REGISTRY[x])
@@ -73,6 +72,20 @@ class Main(QtWidgets.QMainWindow):
 
         self.__df = pd.DataFrame()
 
+        self.__plot_windows = {}
+
+        for title, pair in self.__measurement.recommended_plots.items():
+            if pair not in self.__plot_windows:
+                x_label = self.__measurement.outputs[pair[0]].fullname
+                y_label = self.__measurement.outputs[pair[1]].fullname
+
+                print(x_label, y_label)
+
+                window = PlotWindow(title=title, x_label=x_label, y_label=y_label)
+                self.__plot_windows[pair] = window
+                self.__mdi.addSubWindow(window)
+                window.show()
+
         if x == 'Dummy Measurement':
             self.__measurement.initialize('/', (1, 2), n=50)
             self.__measurement.start()
@@ -84,9 +97,12 @@ class Main(QtWidgets.QMainWindow):
         pass
 
     def __new_data(self, data_dict):
+
         self.__df = self.__df.append(data_dict, ignore_index=True)
-        self.__plot_window.update_data(self.__df)
         self.__tb_window.update_data(self.__df)
+
+        for pair, window in self.__plot_windows.items():
+            window.update_data(self.__df[list(pair)])
 
 
 if __name__ == '__main__':

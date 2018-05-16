@@ -13,7 +13,6 @@ class DummyMeasurement(AbstractMeasurement):
         self._number_of_contacts = Contacts.TWO
 
         self._n = 10
-        self._path = ''
         self._contacts = ()
 
     @property
@@ -22,12 +21,14 @@ class DummyMeasurement(AbstractMeasurement):
 
     @property
     def outputs(self):
-        return {'random': FloatValue('Random Value'),
-                'DateTime': DatetimeValue('Timestamp')}
+        return {'random1': FloatValue('Random Value 1 [a.u.]'),
+                'random2': FloatValue('Random Value 2 [a.u.]'),
+                'Datetime': DatetimeValue('Timestamp')}
 
     @property
     def recommended_plots(self):
-        return [('DateTime', 'random')]
+        return {'Some Time-dep': ('Datetime', 'random1'),
+                'Random Correlation': ('random1', 'random2')}
 
     def initialize(self, path, contacts, n=10):
         """
@@ -44,7 +45,9 @@ class DummyMeasurement(AbstractMeasurement):
         self._signal_interface.emit_started()
 
         for i in range(self._n):
-            self._signal_interface.emit_data({'DateTime': datetime.now(), 'random': random()})
-            sleep(0.5)
+            self._signal_interface.emit_data({'Datetime': datetime.now(),
+                                              'random1': random(),
+                                              'random2': random()})
+            sleep(1)
 
         self._signal_interface.emit_finished({})

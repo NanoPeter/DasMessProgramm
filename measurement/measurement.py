@@ -5,6 +5,9 @@ from enum import Enum
 from threading import Thread
 from datetime import datetime
 
+from os import listdir
+from os.path import join as joinpath
+
 REGISTRY = {}
 
 
@@ -37,22 +40,13 @@ class AbstractValue(object):
     """Represents a generic input which the measurement class will return
     """
 
-    def __init__(self, fullname: str, expected_type: type, default):
+    def __init__(self, fullname: str, default):
         """
         :param fullname: name which should be displayed
-        :param expected_type:
         :param default: default value
         """
-        self.__type = expected_type
         self.__default = default
         self.__fullname = fullname
-
-    @property
-    def type(self) -> type:
-        """
-        :return:
-        """
-        return self.__type
 
     @property
     def default(self):
@@ -65,27 +59,27 @@ class AbstractValue(object):
 
 class IntegerValue(AbstractValue):
     def __init__(self, fullname: str, default: int = 0):
-        super().__init__(fullname, int, default)
+        super().__init__(fullname, default)
 
 
 class FloatValue(AbstractValue):
     def __init__(self, fullname: str, default: float = 0.0):
-        super().__init__(fullname, float, default)
+        super().__init__(fullname, default)
 
 
 class BooleanValue(AbstractValue):
     def __init__(self, fullname: str, default: bool = False):
-        super().__init__(fullname, bool, default)
+        super().__init__(fullname, default)
 
 
 class StringValue(AbstractValue):
     def __init__(self, fullname: str, default: str = ''):
-        super().__init__(fullname, str, default)
+        super().__init__(fullname, default)
 
 
 class DatetimeValue(AbstractValue):
     def __init__(self, fullname: str):
-        super().__init__(fullname, datetime, datetime.now())
+        super().__init__(fullname, datetime.now())
 
 
 class Contacts(Enum):
@@ -113,9 +107,14 @@ class AbstractMeasurement(Thread):
 
     """
     def __init__(self, signal_interface: SignalInterface):
+        """
+        :param signal_interface: An object which is derived from SignalInterface
+        """
         super().__init__()
         self._number_of_contacts = Contacts.TWO
         self._signal_interface = signal_interface
+
+        self._path = '/'
 
     @property
     def inputs(self):
@@ -135,6 +134,9 @@ class AbstractMeasurement(Thread):
 
     def initialize(self, path, contacts, **kwargs):
         NotImplementedError()
+
+    def _get_next_file(self, file_name):
+        return
 
     def run(self):
         pass

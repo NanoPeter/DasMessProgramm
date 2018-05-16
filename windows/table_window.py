@@ -76,6 +76,7 @@ class TableWindow(QMdiSubWindow):
         """
         model = PandasTableDataModel(data)
         self.__table.setModel(model)
+        self.__table.scrollToBottom()
 
     @property
     def selected_columns(self):
