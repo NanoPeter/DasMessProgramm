@@ -82,12 +82,29 @@ class Main(QtWidgets.QMainWindow):
         # TODO: make left hand side scrollable:
         self.__dynamic_inputs_layout = None  # Initialised on-demand from menu bar
         self.__inputs_layout.addStretch()
-        
+
+        right_side_layout = QtWidgets.QVBoxLayout()
+        central_layout.addLayout(right_side_layout)
         self.__mdi = QtWidgets.QMdiArea()
-        central_layout.addWidget(self.__mdi)
+        right_side_layout.addWidget(self.__mdi)
 
+        button_layout = QtWidgets.QHBoxLayout()
+        right_side_layout.addLayout(button_layout)
+        button_layout.addStretch()
+        
+        self.__measure_button = QtWidgets.QPushButton("Measure")
+        button_layout.addWidget(self.__measure_button)
+        self.__measure_button.setFixedWidth(100)
+
+        self.__abort_button = QtWidgets.QPushButton("Abort")
+        button_layout.addWidget(self.__abort_button)
+        self.__abort_button.setFixedWidth(100)
+
+        self.__next_button = QtWidgets.QPushButton("Next")
+        button_layout.addWidget(self.__next_button)
+        self.__next_button.setFixedWidth(100)
+        
         self.setCentralWidget(central_widget)
-
         self.__tb_window = TableWindow()
         self.__mdi.addSubWindow(self.__tb_window)
 

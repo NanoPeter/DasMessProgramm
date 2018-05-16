@@ -22,6 +22,8 @@ class DynamicInputLayout(QtWidgets.QVBoxLayout):
                         FloatValue: QtGui.QDoubleValidator,
                         StringValue: None}
     # TODO: Implement BooleanValue and DatetimeValue
+
+    FIXED_WIDTH = 200
     
     def __init__(self, inputs):
         """
@@ -49,6 +51,7 @@ class DynamicInputLayout(QtWidgets.QVBoxLayout):
             element_layout.addWidget(QtWidgets.QLabel(element_name))  # Header text
 
             element_input_field = QtWidgets.QLineEdit()
+            element_input_field.setFixedWidth(self.FIXED_WIDTH)
             self.__dynamic_inputs[element] = element_input_field
             element_layout.addWidget(element_input_field)
 
