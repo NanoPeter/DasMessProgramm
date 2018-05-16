@@ -49,5 +49,8 @@ class DummyMeasurement(AbstractMeasurement):
                                               'random1': random(),
                                               'random2': random()})
             sleep(1)
+            if self._should_stop.is_set():
+                self.__signal_interface.emit_aborted()
+                break
 
         self._signal_interface.emit_finished({})

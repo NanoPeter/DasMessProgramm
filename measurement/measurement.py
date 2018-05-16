@@ -5,6 +5,8 @@ from enum import Enum
 from threading import Thread
 from datetime import datetime
 
+from threading import Event
+
 from os import listdir
 from os.path import join as joinpath
 
@@ -101,6 +103,9 @@ class SignalInterface:
     def emit_started(self):
         NotImplemented()
 
+    def emit_aborted(self):
+        NotImplemented()
+
 
 class AbstractMeasurement(Thread):
     """
@@ -115,6 +120,8 @@ class AbstractMeasurement(Thread):
         self._signal_interface = signal_interface
 
         self._path = '/'
+
+        self._should_stop = Event()
 
     @property
     def inputs(self):
@@ -137,6 +144,10 @@ class AbstractMeasurement(Thread):
 
     def _get_next_file(self, file_name):
         return
+
+    def abort(self):
+        self._should_stop.set()
+        self.join()
 
     def run(self):
         pass
