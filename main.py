@@ -1,9 +1,10 @@
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import QApplication
 
-from measurement.measurement import FloatInput, IntegerInput
+from measurement.measurement import FloatValue, IntegerValue, StringValue
 from windows.table_window import TableWindow
 from windows.plot_window import PlotWindow
+from windows.dynamic_input import DynamicInputLayout
 import pandas as pd
 
 from datetime import datetime
@@ -33,10 +34,6 @@ class SignalDataAcquisition(QtCore.QObject, SignalInterface):
 
 class Main(QtWidgets.QMainWindow):
 
-    input_validators = {int: QtGui.QIntValidator,  # Qt-internal checks for different input widget types
-                        float: QtGui.QDoubleValidator,
-                        str: None}
-
     def __init__(self):
         super(Main, self).__init__()
 
@@ -45,15 +42,8 @@ class Main(QtWidgets.QMainWindow):
         self.__signal_interface.data.connect(self.__new_data)
 
         self.__directory_name = ""
-        self.__dynamic_inputs = dict()  # type: Dict[str, QtWidgets.QLineEdit]
 
         self.__init_gui()
-
-        # DEBUG:
-        self.__create_input_ui({
-            'v': FloatInput('Maximum Voltage', default=0.0),
-            'i': FloatInput('Current Limit', default=1e-6),
-            'nplc': IntegerInput('NPLC', default=1)})
 
     def __init_gui(self):
         self.setWindowTitle('DasMessProgramm')
@@ -65,16 +55,15 @@ class Main(QtWidgets.QMainWindow):
         for entry in registry:
             method.addAction(entry, lambda x=entry: self.__menu_measurement_selected(x))
 
-
         central_layout = QtWidgets.QHBoxLayout()
         central_widget = QtWidgets.QWidget()
         central_widget.setLayout(central_layout)
 
-        inputs_layout = QtWidgets.QVBoxLayout()
-        central_layout.addLayout(inputs_layout)
+        self.__inputs_layout = QtWidgets.QVBoxLayout()
+        central_layout.addLayout(self.__inputs_layout)
 
         file_name_layout = QtWidgets.QVBoxLayout()
-        inputs_layout.addLayout(file_name_layout)
+        self.__inputs_layout.addLayout(file_name_layout)
         file_name_layout.setSpacing(5)
         file_name_layout.addWidget(QtWidgets.QLabel("Save directory:"))
         self.__file_name_display = QtWidgets.QLineEdit()
@@ -90,13 +79,9 @@ class Main(QtWidgets.QMainWindow):
         file_name_button.setText("Browse...")
         file_name_button.clicked.connect(self.__set_directory_name)
 
-        # This layout contains the dynamically managed inputs:
-        self.__dynamic_inputs_layout = QtWidgets.QVBoxLayout()
-        self.__dynamic_inputs_layout.setSpacing(15)
-        file_name_layout.addLayout(self.__dynamic_inputs_layout)
-
-        inputs_layout.addStretch()
-
+        self.__dynamic_inputs_layout = None  # Initialised on-demand from menu bar
+        self.__inputs_layout.addStretch()
+        
         self.__mdi = QtWidgets.QMdiArea()
         central_layout.addWidget(self.__mdi)
 
@@ -147,34 +132,37 @@ class Main(QtWidgets.QMainWindow):
         Arguments:
             inputs: Dict[str, AbstractInput]: A dictionary of inputs as defined in SMU2Probe.inputs
         """
-        self.__dynamic_inputs.clear()
+        # Remove old dynamic layout, if any:
+        if self.__dynamic_inputs_layout is not None:
 
-        for element in list(inputs.keys()):
-            element_layout = QtWidgets.QVBoxLayout()
-            element_layout.setSpacing(0)
-            self.__dynamic_inputs_layout.addLayout(element_layout)
+            def delete_children(layout):
+                while layout.count() > 0:
+                    child = layout.takeAt(0)
+                    if child.widget() is not None:
+                        child.widget().deleteLater()
+                    elif child.layout() is not None:
+                        delete_children(child.layout())
 
-            element_name = inputs[element].fullname
-            element_layout.addWidget(QtWidgets.QLabel(element_name))  # Header text
+            delete_children(self.__dynamic_inputs_layout)
+            self.__inputs_layout.removeItem(self.__dynamic_inputs_layout)
+            del self.__dynamic_inputs_layout
+        
+        self.__dynamic_inputs_layout = DynamicInputLayout(inputs)
+        self.__dynamic_inputs_layout.setSpacing(15)
 
-            element_input_field = QtWidgets.QLineEdit()
-            self.__dynamic_inputs[element] = element_input_field
-            element_layout.addWidget(element_input_field)
-
-            # Validate the input field if it is numerical:
-            element_type = inputs[element].type
-            element_input_validator = self.input_validators[element_type]  # This is a type object
-            if element_input_validator is not None:
-                element_input_field.setValidator(element_input_validator())
-
-            element_default = inputs[element].default
-            element_input_field.setText(str(element_default))
+        # Remove old stretch before adding new one below:
+        old_stretch = self.__inputs_layout.takeAt(self.__inputs_layout.count() - 1)
+        self.__inputs_layout.removeItem(old_stretch)
+        
+        self.__inputs_layout.addLayout(self.__dynamic_inputs_layout, -1)
+        self.__inputs_layout.addStretch()
 
     def __get_input_arguments(self):
         """Return a dictionary of input names with their user-set values.
 
         Names are not the full names of an input but their dictionary index.
         """
+        # TODO: Adapt to new external DynamicInputLayout class.
         input_values = dict()
         for name in self.__dynamic_inputs:
             input_values[name] = self.__dynamic_inputs[name].text()
@@ -186,9 +174,7 @@ class Main(QtWidgets.QMainWindow):
         """Open a dialogue to change the output directory."""
         self.__directory_name = QtWidgets.QFileDialog.getExistingDirectoryUrl().path() + "/"
 
-
     def __new_data(self, data_dict):
-
         self.__df = self.__df.append(data_dict, ignore_index=True)
         self.__tb_window.update_data(self.__df)
 
