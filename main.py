@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QApplication
 from measurement.measurement import FloatValue, IntegerValue, StringValue
 from windows.table_window import TableWindow
 from windows.plot_window import PlotWindow
-from windows.dynamic_input import DynamicInputLayout
+from windows.dynamic_input import DynamicInputLayout, delete_children
 import pandas as pd
 
 from datetime import datetime
@@ -79,6 +79,7 @@ class Main(QtWidgets.QMainWindow):
         file_name_button.setText("Browse...")
         file_name_button.clicked.connect(self.__set_directory_name)
 
+        # TODO: make left hand side scrollable:
         self.__dynamic_inputs_layout = None  # Initialised on-demand from menu bar
         self.__inputs_layout.addStretch()
         
@@ -134,15 +135,6 @@ class Main(QtWidgets.QMainWindow):
         """
         # Remove old dynamic layout, if any:
         if self.__dynamic_inputs_layout is not None:
-
-            def delete_children(layout):
-                while layout.count() > 0:
-                    child = layout.takeAt(0)
-                    if child.widget() is not None:
-                        child.widget().deleteLater()
-                    elif child.layout() is not None:
-                        delete_children(child.layout())
-
             delete_children(self.__dynamic_inputs_layout)
             self.__inputs_layout.removeItem(self.__dynamic_inputs_layout)
             del self.__dynamic_inputs_layout
@@ -156,18 +148,6 @@ class Main(QtWidgets.QMainWindow):
         
         self.__inputs_layout.addLayout(self.__dynamic_inputs_layout, -1)
         self.__inputs_layout.addStretch()
-
-    def __get_input_arguments(self):
-        """Return a dictionary of input names with their user-set values.
-
-        Names are not the full names of an input but their dictionary index.
-        """
-        # TODO: Adapt to new external DynamicInputLayout class.
-        input_values = dict()
-        for name in self.__dynamic_inputs:
-            input_values[name] = self.__dynamic_inputs[name].text()
-
-        return input_values
 
     @QtCore.pyqtSlot()
     def __set_directory_name(self):
