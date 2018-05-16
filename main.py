@@ -10,7 +10,7 @@ import pandas as pd
 from datetime import datetime
 
 import measurement
-from measurement.measurement import SignalInterface
+from measurement.measurement import SignalInterface, Contacts
 from typing import Dict, List
 
 
@@ -118,7 +118,6 @@ class Main(QtWidgets.QMainWindow):
         self.__contact_input_third.setFixedWidth(80)
         self.__contact_input_fourth.setCurrentIndex(3)
         self.__contact_input_fourth.setFixedWidth(80)
-        
 
         # TODO: make left hand side scrollable:
         self.__dynamic_inputs_layout = None  # Initialised on-demand from menu bar
@@ -178,9 +177,13 @@ class Main(QtWidgets.QMainWindow):
                 self.__mdi.addSubWindow(window)
                 window.show()
 
-        if x == 'Dummy Measurement':
-            self.__measurement.initialize('/', (1, 2), n=50)
-            self.__measurement.start()
+        if self.__measurement.number_of_contacts == Contacts.TWO:
+            four_wire_visible = False
+        elif self.__measurement.number_of_contacts == Contacts.FOUR:
+            four_wire_visible = True
+        self.__sense_contacts_label.setVisible(four_wire_visible)
+        self.__contact_input_third.setVisible(four_wire_visible)
+        self.__contact_input_second.setVisible(four_wire_visible)
 
     def __start__measurement(self):
         pass
