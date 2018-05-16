@@ -2,6 +2,19 @@ from PyQt5 import QtCore, QtWidgets, QtGui
 from measurement.measurement import FloatValue, IntegerValue, StringValue
 
 
+def delete_children(layout):
+    """Delete all child layouts and widgets of a layout.
+    
+    This must be done before removing this layout from its parent.
+    """
+    while layout.count() > 0:
+        child = layout.takeAt(0)
+        if child.widget() is not None:
+            child.widget().deleteLater()
+        elif child.layout() is not None:
+            delete_children(child.layout())
+
+
 class DynamicInputLayout(QtWidgets.QVBoxLayout):
 
     # Qt-internal checks for different input widget types
@@ -47,4 +60,14 @@ class DynamicInputLayout(QtWidgets.QVBoxLayout):
 
             element_default = inputs[element].default
             element_input_field.setText(str(element_default))
-        
+
+    def get_inputs(self):
+        """Return a dictionary of input names with their user-set values.
+
+        Names are not the full names of an input but their dictionary index.
+        """
+        input_values = dict()
+        for name in self.__dynamic_inputs:
+            input_values[name] = self.__dynamic_inputs[name].text()
+
+        return input_values
