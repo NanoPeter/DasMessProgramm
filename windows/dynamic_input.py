@@ -36,6 +36,8 @@ class DynamicInputLayout(QtWidgets.QVBoxLayout):
 
         self.__load_widgets(inputs)
 
+        self.__inputs = inputs
+
     def __load_widgets(self, inputs):
         """Load widgets into this layout dynamically.
 
@@ -70,7 +72,9 @@ class DynamicInputLayout(QtWidgets.QVBoxLayout):
         Names are not the full names of an input but their dictionary index.
         """
         input_values = dict()
-        for name in self.__dynamic_inputs:
-            input_values[name] = self.__dynamic_inputs[name].text()
+
+        for name, dynamic_input in self.__dynamic_inputs.items():
+            input = self.__inputs[name]
+            input_values[name] = input.convert_from_string(dynamic_input.text())
 
         return input_values

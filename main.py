@@ -1,13 +1,11 @@
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import QApplication
 
-from measurement.measurement import FloatValue, IntegerValue, StringValue
 from windows.table_window import TableWindow
 from windows.plot_window import PlotWindow
 from windows.dynamic_input import DynamicInputLayout, delete_children
 import pandas as pd
 
-from datetime import datetime
 
 import measurement
 from measurement.measurement import SignalInterface, Contacts
@@ -136,6 +134,8 @@ class Main(QtWidgets.QMainWindow):
         button_layout.addWidget(self.__measure_button)
         self.__measure_button.setFixedWidth(100)
 
+        self.__measure_button.clicked.connect(self.__start__measurement)
+
         self.__abort_button = QtWidgets.QPushButton("Abort")
         button_layout.addWidget(self.__abort_button)
         self.__abort_button.setFixedWidth(100)
@@ -163,6 +163,22 @@ class Main(QtWidgets.QMainWindow):
 
         self.__df = pd.DataFrame()
 
+        if self.__measurement.number_of_contacts == Contacts.TWO:
+            four_wire_visible = False
+        elif self.__measurement.number_of_contacts == Contacts.FOUR:
+            four_wire_visible = True
+        self.__sense_contacts_label.setVisible(four_wire_visible)
+        self.__contact_input_third.setVisible(four_wire_visible)
+        self.__contact_input_fourth.setVisible(four_wire_visible)
+
+    def __start__measurement(self):
+        contacts = self.__get_contacts()
+        path = self.__get_path()
+
+        inputs = self.__dynamic_inputs_layout.get_inputs()
+
+        self.__measurement.initialize(path, contacts, **inputs)
+
         self.__plot_windows = {}
 
         for title, pair in self.__measurement.recommended_plots.items():
@@ -177,16 +193,24 @@ class Main(QtWidgets.QMainWindow):
                 self.__mdi.addSubWindow(window)
                 window.show()
 
-        if self.__measurement.number_of_contacts == Contacts.TWO:
-            four_wire_visible = False
-        elif self.__measurement.number_of_contacts == Contacts.FOUR:
-            four_wire_visible = True
-        self.__sense_contacts_label.setVisible(four_wire_visible)
-        self.__contact_input_third.setVisible(four_wire_visible)
-        self.__contact_input_second.setVisible(four_wire_visible)
+        self.__measurement.start()
 
-    def __start__measurement(self):
-        pass
+    def __get_contacts(self):
+
+        contact_inputs = [self.__contact_input_first, self.__contact_input_second,
+                          self.__contact_input_third, self.__contact_input_fourth]
+
+        contacts = []
+
+        for contact_input in contact_inputs:
+            if contact_input.isVisible():
+                contacts.append(contact_input.currentText())
+
+        return tuple(contacts)
+
+    def __get_path(self):
+        return self.__file_name_display.text()
+
             
     def __finished(self, data_dict):
         pass
@@ -217,6 +241,7 @@ class Main(QtWidgets.QMainWindow):
     def __set_directory_name(self):
         """Open a dialogue to change the output directory."""
         self.__directory_name = QtWidgets.QFileDialog.getExistingDirectoryUrl().path() + "/"
+        self.__file_name_display.setText(self.__directory_name)
 
     def __new_data(self, data_dict):
         self.__df = self.__df.append(data_dict, ignore_index=True)

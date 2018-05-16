@@ -7,6 +7,8 @@ from datetime import datetime
 
 from threading import Event
 
+from dateutil import parser
+
 from os import listdir
 from os.path import join as joinpath
 
@@ -58,30 +60,48 @@ class AbstractValue(object):
     def fullname(self):
         return self.__fullname
 
+    def convert_from_string(self, value):
+        NotImplementedError()
+
 
 class IntegerValue(AbstractValue):
     def __init__(self, fullname: str, default: int = 0):
         super().__init__(fullname, default)
+
+    def convert_from_string(self, value):
+        return int(value)
 
 
 class FloatValue(AbstractValue):
     def __init__(self, fullname: str, default: float = 0.0):
         super().__init__(fullname, default)
 
+    def convert_from_string(self, value):
+        return float(value)
+
 
 class BooleanValue(AbstractValue):
     def __init__(self, fullname: str, default: bool = False):
         super().__init__(fullname, default)
+
+    def convert_from_string(self, value):
+        return bool(value)
 
 
 class StringValue(AbstractValue):
     def __init__(self, fullname: str, default: str = ''):
         super().__init__(fullname, default)
 
+    def convert_from_string(self, value):
+        return str(value)
+
 
 class DatetimeValue(AbstractValue):
     def __init__(self, fullname: str):
         super().__init__(fullname, datetime.now())
+
+    def convert_from_string(self, value):
+        return parser.parse(value)
 
 
 class Contacts(Enum):

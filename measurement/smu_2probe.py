@@ -13,7 +13,7 @@ class SMU2Probe(AbstractMeasurement):
         return {'v': FloatValue('Maximum Voltage', default=0.0),
                 'i': FloatValue('Current Limit', default=1e-6),
                 'n': IntegerValue('Number of Points', default=100),
-                'nplc': IntegerValue('')}
+                'nplc': IntegerValue('NPLC', default=1)}
 
     @property
     def outputs(self):
