@@ -34,6 +34,14 @@ class SignalDataAcquisition(QtCore.QObject, SignalInterface):
 
 class Main(QtWidgets.QMainWindow):
 
+    CONTACT_NUMBERS = [ 
+        "05 I-7", "06 I-8", "02 I-2", "04 I-4", "03 I-3", "01 I-1",
+        "07 II-1", "09 II-3", "10 II-4", "08 II-2", "12 II-8", "11 II-7", 
+        "17 III-7", "18 III-8", "14 III-2", "16 III-4", "15 III-3", "13 III-1",
+        "19 IV-1", "21 IV-3", "22 IV-4","20 IV-2", "24 IV-8", "23 IV-7"
+    ]
+
+    
     def __init__(self):
         super(Main, self).__init__()
 
@@ -78,6 +86,39 @@ class Main(QtWidgets.QMainWindow):
         file_name_layout.addWidget(file_name_button)
         file_name_button.setText("Browse...")
         file_name_button.clicked.connect(self.__set_directory_name)
+
+        contacts_layout = QtWidgets.QVBoxLayout()
+        self.__inputs_layout.addLayout(contacts_layout)
+        contacts_layout.setSpacing(5)
+        contacts_layout.addWidget(QtWidgets.QLabel("Contacts:"))
+        first_contact_pair = QtWidgets.QHBoxLayout()
+        contacts_layout.addLayout(first_contact_pair)
+        self.__contact_input_first = QtWidgets.QComboBox()
+        first_contact_pair.addWidget(self.__contact_input_first)
+        self.__contact_input_second = QtWidgets.QComboBox()
+        first_contact_pair.addWidget(self.__contact_input_second)
+        self.__sense_contacts_label = QtWidgets.QLabel("4-wire sense contacts:")
+        contacts_layout.addWidget(self.__sense_contacts_label)
+        second_contact_pair = QtWidgets.QHBoxLayout()
+        contacts_layout.addLayout(second_contact_pair)
+        self.__contact_input_third = QtWidgets.QComboBox()
+        second_contact_pair.addWidget(self.__contact_input_third)
+        self.__contact_input_fourth = QtWidgets.QComboBox()
+        second_contact_pair.addWidget(self.__contact_input_fourth)
+        for contact in self.CONTACT_NUMBERS:
+            self.__contact_input_first.addItem(contact)
+            self.__contact_input_second.addItem(contact)
+            self.__contact_input_third.addItem(contact)
+            self.__contact_input_fourth.addItem(contact)
+        self.__contact_input_first.setCurrentIndex(0)
+        self.__contact_input_first.setFixedWidth(80)
+        self.__contact_input_second.setCurrentIndex(1)
+        self.__contact_input_second.setFixedWidth(80)
+        self.__contact_input_third.setCurrentIndex(2)
+        self.__contact_input_third.setFixedWidth(80)
+        self.__contact_input_fourth.setCurrentIndex(3)
+        self.__contact_input_fourth.setFixedWidth(80)
+        
 
         # TODO: make left hand side scrollable:
         self.__dynamic_inputs_layout = None  # Initialised on-demand from menu bar
@@ -141,6 +182,9 @@ class Main(QtWidgets.QMainWindow):
             self.__measurement.initialize('/', (1, 2), n=50)
             self.__measurement.start()
 
+    def __start__measurement(self):
+        pass
+            
     def __finished(self, data_dict):
         pass
 
