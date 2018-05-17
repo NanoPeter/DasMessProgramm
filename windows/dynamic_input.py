@@ -1,8 +1,10 @@
 from PyQt5 import QtCore, QtWidgets, QtGui
-from measurement.measurement import FloatValue, IntegerValue, StringValue
+from measurement.measurement import FloatValue, IntegerValue, StringValue, AbstractValue
 
+from typing import Dict, Union
+from datetime import datetime
 
-def delete_children(layout):
+def delete_children(layout: QtWidgets.QLayout) -> None:
     """Delete all child layouts and widgets of a layout.
     
     This must be done before removing this layout from its parent.
@@ -25,24 +27,24 @@ class DynamicInputLayout(QtWidgets.QVBoxLayout):
 
     FIXED_WIDTH = 200
     
-    def __init__(self, inputs):
+    def __init__(self, inputs: Dict[str, AbstractValue]) -> None:
         """
         Arguments:
-            inputs: Dict[str, AbstractInput]: A dictionary of inputs as defined in SMU2Probe.inputs
+            inputs: A dictionary of inputs as defined in SMU2Probe.inputs
         """
         super().__init__()
 
-        self.__dynamic_inputs = dict()  # type: Dict[str, QLineEdit]
+        self.__dynamic_inputs = dict()  # type: Dict[str, QtWidgets.QLineEdit]
 
         self.__load_widgets(inputs)
 
         self.__inputs = inputs
 
-    def __load_widgets(self, inputs):
+    def __load_widgets(self, inputs: Dict[str, AbstractValue]) -> None:
         """Load widgets into this layout dynamically.
 
         Arguments:
-            inputs: Dict[str, AbstractInput]: A dictionary of inputs as defined in SMU2Probe.inputs
+            inputs: A dictionary of inputs as defined in SMU2Probe.inputs
         """
         for element in list(inputs.keys()):
             element_layout = QtWidgets.QVBoxLayout()
@@ -66,15 +68,15 @@ class DynamicInputLayout(QtWidgets.QVBoxLayout):
             element_default = inputs[element].default
             element_input_field.setText(str(element_default))
 
-    def get_inputs(self):
+    def get_inputs(self) -> Dict[str, Union[int, float, bool, str, datetime]]:
         """Return a dictionary of input names with their user-set values.
 
         Names are not the full names of an input but their dictionary index.
         """
-        input_values = dict()
+        input_values = dict()  # type: Dict[str, Union[int, float, bool, str, datetime]]
 
         for name, dynamic_input in self.__dynamic_inputs.items():
-            input = self.__inputs[name]
+            input = self.__inputs[name]  # type: AbstractValue
             input_values[name] = input.convert_from_string(dynamic_input.text())
 
         return input_values

@@ -1,5 +1,5 @@
 from .measurement import register, AbstractMeasurement, Contacts
-from .measurement import FloatValue, IntegerValue, DatetimeValue, BooleanValue, AbstractValue
+from .measurement import FloatValue, IntegerValue, DatetimeValue, AbstractValue, SignalInterface
 
 import numpy as np
 from datetime import datetime
@@ -8,7 +8,7 @@ import time
 from typing import Dict, Tuple
 from typing.io import TextIO
 
-from visa import Resource, ResourceManager
+from visa import ResourceManager
 from scientificdevices.keithley.sourcemeter2400 import Sourcemeter2400
 
 
@@ -18,7 +18,7 @@ class SMU2Probe(AbstractMeasurement):
 
     GPIB_RESOURCE = "GPIB::10::INSTR"
 
-    def __init__(self, signal_interface) -> None:
+    def __init__(self, signal_interface: SignalInterface) -> None:
         super().__init__(signal_interface)
         self._number_of_contacts = Contacts.TWO
         self._path = str()
@@ -61,7 +61,7 @@ class SMU2Probe(AbstractMeasurement):
         :param n: Number of data points to acquire
         :param nplc: Number of cycles over which to average
         """
-        self._path = path  # TODO: Generate a file path from directory path at runtime.
+        self._path = self._get_next_file(path)  # TODO: Generate a file path from directory path at runtime.
         self._contacts = contacts
         self._max_voltage, self._current_limit = v, i
         self._number_of_points = n
@@ -73,7 +73,6 @@ class SMU2Probe(AbstractMeasurement):
 
         self._file_prefix = self._generate_file_name_prefix()
 
-
     def __call__(self) -> None:
         """Custom measurement code lives here.
 
@@ -81,9 +80,8 @@ class SMU2Probe(AbstractMeasurement):
         """
         self._signal_interface.emit_started()  # Tell the UI that measurement has begun
 
-        file_path = self._get_next_file(self._file_prefix)  # Set file path from directory path
-        with open(file_path, "w") as outfile:
-            print("DEBUG: Writing to file", file_path)
+        with open(self._path, "w") as outfile:
+            print("DEBUG: Writing to file", self._path)
             self.__write_header(outfile)
 
             self.__initialize_device()

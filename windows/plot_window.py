@@ -9,11 +9,13 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
 from pandas import DataFrame
+from typing import List
 
 
 class PlotWidget(FigureCanvas):
 
-    def __init__(self, parent=None, width=5, height=4, dpi=72, title='', x_label='', y_label=''):
+    def __init__(self, parent=None, width: int = 5, height: int = 4, dpi: int = 72,
+                 title: str = '', x_label: str = '', y_label: str = '') -> None:
         self._figure = Figure(figsize=(width, height), dpi=dpi)
         self._axes = self._figure.add_subplot(111)
 
@@ -27,12 +29,7 @@ class PlotWidget(FigureCanvas):
         super().setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         super().updateGeometry()
 
-    def update_figure(self, x_data, y_data):
-        """
-        :param x_data:
-        :param y_data:
-        :return:
-        """
+    def update_figure(self, x_data: List[float], y_data: List[float]) -> None:
         self._axes.cla()
         self._axes.set_title(self._title)
         self._axes.set_xlabel(self._x_label)
@@ -48,7 +45,7 @@ class PlotWidget(FigureCanvas):
 class PlotWindow(QMdiSubWindow):
     """This is a simple sub window to show a plot of data
     """
-    def __init__(self, title='', x_label='', y_label=''):
+    def __init__(self, title: str = '', x_label: str = '', y_label: str = '') -> None:
         super().__init__()
 
         self.setWindowTitle(title)
@@ -56,7 +53,7 @@ class PlotWindow(QMdiSubWindow):
         self._plot_widget = PlotWidget(title=title, x_label=x_label, y_label=y_label)
         self.setWidget(self._plot_widget)
 
-    def update_data(self, data: DataFrame):
+    def update_data(self, data: DataFrame) -> None:
         """
         Updates the plot view with new data :)
         :param data: A Pandas DataFrame with the containing data

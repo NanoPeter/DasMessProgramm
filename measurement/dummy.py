@@ -1,39 +1,41 @@
 from .measurement import register, AbstractMeasurement, Contacts, SignalInterface
-from .measurement import FloatValue, IntegerValue, DatetimeValue
+from .measurement import AbstractValue, FloatValue, IntegerValue, DatetimeValue
 
 from random import random
 from datetime import datetime
 from time import sleep
+from typing import Tuple
+from typing.io import TextIO
 
 
 @register('Dummy Measurement')
 class DummyMeasurement(AbstractMeasurement):
-    def __init__(self, signal_interface: SignalInterface):
+    def __init__(self, signal_interface: SignalInterface) -> None:
         super().__init__(signal_interface)
         self._number_of_contacts = Contacts.TWO
 
         self._n = 10
-        self._contacts = ()
+        self._contacts = ()  # type: Union[Tuple[str, str], Tuple[str, str, str, str]]
 
-        self._recommended_plot_file_paths = {}
-        self._file_path = {}
+        self._recommended_plot_file_paths = {}  # type: Dict[Tuple[str, str], str]
+        self._file_path = str()
 
     @property
-    def inputs(self):
+    def inputs(self) -> Tuple[str, AbstractValue]:
         return {'n': IntegerValue('Number of Points', default=10)}
 
     @property
-    def outputs(self):
+    def outputs(self) -> Tuple[str, AbstractValue]:
         return {'random1': FloatValue('Random Value 1 [a.u.]'),
                 'random2': FloatValue('Random Value 2 [a.u.]'),
                 'datetime': DatetimeValue('Timestamp')}
 
     @property
-    def recommended_plots(self):
+    def recommended_plots(self) -> Dict[str, Tuple[str, str]]:
         return {'Some Time-dep': ('datetime', 'random1'),
                 'Random Correlation': ('random1', 'random2')}
 
-    def initialize(self, path, contacts, n=10):
+    def initialize(self, path, contacts, n=10) -> None:
         """
         :param path:
         :param contacts:
@@ -56,7 +58,7 @@ class DummyMeasurement(AbstractMeasurement):
             self._recommended_plot_file_paths[pair] = self._get_next_file(plot_file_name_prefix, file_suffix='.pdf')
 
 
-    def __call__(self):
+    def __call__(self) -> None:
         self._signal_interface.emit_started()
         self._should_stop.clear()
 
@@ -78,6 +80,6 @@ class DummyMeasurement(AbstractMeasurement):
 
         self._signal_interface.emit_finished(self._recommended_plot_file_paths)
 
-    def __print_header(self, fil):
+    def __print_header(self, fil: TextIO) -> None:
         print('#WAZAUP?', file=fil)
         print('datetime random1 random3', file=fil)

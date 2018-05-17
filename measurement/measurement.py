@@ -6,6 +6,7 @@ from threading import Thread
 from datetime import datetime
 
 from threading import Event
+from typing import Dict, List, Tuple, Union
 
 from abc import ABC, abstractmethod
 
@@ -46,7 +47,7 @@ class AbstractValue(object):
     """Represents a generic input which the measurement class will return
     """
 
-    def __init__(self, fullname: str, default):
+    def __init__(self, fullname: str, default: Union[int, float, bool, str, datetime]) -> None:
         """
         :param fullname: name which should be displayed
         :param default: default value
@@ -55,59 +56,59 @@ class AbstractValue(object):
         self.__fullname = fullname
 
     @property
-    def default(self):
+    def default(self) -> Union[int, float, bool, str, datetime]:
         return self.__default
 
     @property
-    def fullname(self):
+    def fullname(self) -> str:
         return self.__fullname
 
-    def convert_from_string(self, value):
+    def convert_from_string(self, value: str) -> Union[int, float, bool, str, datetime]:
         NotImplementedError()
 
 
 class IntegerValue(AbstractValue):
-    def __init__(self, fullname: str, default: int = 0):
+    def __init__(self, fullname: str, default: int = 0) -> None:
         super().__init__(fullname, default)
 
-    def convert_from_string(self, value):
+    def convert_from_string(self, value: str) -> int:
         return int(value)
 
 
 class FloatValue(AbstractValue):
-    def __init__(self, fullname: str, default: float = 0.0):
+    def __init__(self, fullname: str, default: float = 0.0) -> None:
         super().__init__(fullname, default)
 
-    def convert_from_string(self, value):
+    def convert_from_string(self, value: str) -> float:
         return float(value)
 
 
 class BooleanValue(AbstractValue):
-    def __init__(self, fullname: str, default: bool = False):
+    def __init__(self, fullname: str, default: bool = False) -> None:
         super().__init__(fullname, default)
 
-    def convert_from_string(self, value):
+    def convert_from_string(self, value: str) -> bool:
         return bool(value)
 
 
 class StringValue(AbstractValue):
-    def __init__(self, fullname: str, default: str = ''):
+    def __init__(self, fullname: str, default: str = '') -> None:
         super().__init__(fullname, default)
 
-    def convert_from_string(self, value):
+    def convert_from_string(self, value: str) -> str:
         return str(value)
 
 
 class DatetimeValue(AbstractValue):
-    def __init__(self, fullname: str):
+    def __init__(self, fullname: str) -> None:
         super().__init__(fullname, datetime.now())
 
-    def convert_from_string(self, value):
+    def convert_from_string(self, value) -> datetime:
         return parser.parse(value)
 
 
 class Contacts(Enum):
-    """Gives
+    """Gives 
     """
     TWO = 2
     FOUR = 4
@@ -116,16 +117,16 @@ class Contacts(Enum):
 class SignalInterface:
     """An typical
     """
-    def emit_finished(self, data):
+    def emit_finished(self, data: Dict[str, Union[int, float, bool, str, datetime]]) -> None:
         NotImplementedError()
 
-    def emit_data(self, data):
+    def emit_data(self, data: Dict[str, Union[int, float, bool, str, datetime]]) -> None:
         NotImplementedError()
 
-    def emit_started(self):
+    def emit_started(self) -> None:
         NotImplemented()
 
-    def emit_aborted(self):
+    def emit_aborted(self) -> None:
         NotImplemented()
 
 
@@ -133,7 +134,7 @@ class AbstractMeasurement(ABC):
     """
 
     """
-    def __init__(self, signal_interface: SignalInterface):
+    def __init__(self, signal_interface: SignalInterface) -> None:
         """
         :param signal_interface: An object which is derived from SignalInterface
         """
@@ -142,20 +143,20 @@ class AbstractMeasurement(ABC):
         self._signal_interface = signal_interface
 
         self._path = '/'
-        self._contacts = ()
+        self._contacts = ()  # type: Union[Tuple, Tuple[str, str], Tuple[str, str, str, str]]
 
         self._should_stop = Event()
 
     @property
-    def inputs(self):
+    def inputs(self) -> Dict:
         return {}
 
     @property
-    def outputs(self):
+    def outputs(self) -> Dict:
         return {}
 
     @property
-    def recommended_plots(self):
+    def recommended_plots(self) -> List:
         return []
 
     @property
@@ -163,10 +164,10 @@ class AbstractMeasurement(ABC):
         return self._number_of_contacts
 
     @abstractmethod
-    def initialize(self, path, contacts, **kwargs):
+    def initialize(self, path, contacts, **kwargs) -> None:
         pass
 
-    def _get_next_file(self, file_prefix: str, file_suffix: str='.dat'):
+    def _get_next_file(self, file_prefix: str, file_suffix: str = '.dat') -> str:
         """
         Looks for existing files and generates a suitable successor
         :param file_prefix: the beginning of the file name
@@ -205,10 +206,10 @@ class AbstractMeasurement(ABC):
     def _generate_plot_file_name_prefix(self, pair) -> str:
         return 'contacts_{}_plot-{}-{}_'.format('--'.join(self._contacts), pair[0], pair[1])
 
-    def abort(self):
+    def abort(self) -> None:
         self._should_stop.set()
 
     @abstractmethod
-    def __call__(self):
+    def __call__(self) -> None:
         pass
 
