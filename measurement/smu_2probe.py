@@ -73,6 +73,7 @@ class SMU2Probe(AbstractMeasurement):
 
         self._file_prefix = self._generate_file_name_prefix()
 
+
     def __call__(self) -> None:
         """Custom measurement code lives here.
 

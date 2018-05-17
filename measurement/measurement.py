@@ -184,7 +184,8 @@ class AbstractMeasurement(ABC):
                               ]
 
         if len(filtered_file_list) == 0:
-            return '{prefix}001{suffix}'.format(prefix=file_prefix, suffix=file_suffix)
+            new_file_name = '{prefix}001{suffix}'.format(prefix=file_prefix, suffix=file_suffix)
+            return join_path(self._path, new_file_name)
 
         last_file_name = sorted(filtered_file_list)[-1]
 
@@ -194,10 +195,15 @@ class AbstractMeasurement(ABC):
                                                               number=last_number + 1,
                                                               suffix=file_suffix)
 
+        print(self._path, new_file_name)
+
         return join_path(self._path, new_file_name)
 
     def _generate_file_name_prefix(self) -> str:
-        return 'contacts_{}'.format('--'.join(self._contacts))
+        return 'contacts_{}--'.format('--'.join(self._contacts))
+
+    def _generate_plot_file_name_prefix(self, pair) -> str:
+        return 'contacts_{}_plot-{}-{}'.format('--'.join(self._contacts), pair[0], pair[1])
 
     def abort(self):
         self._should_stop.set()

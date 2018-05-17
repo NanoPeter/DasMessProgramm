@@ -144,6 +144,8 @@ class Main(QtWidgets.QMainWindow):
         button_layout.addWidget(self.__abort_button)
         self.__abort_button.setFixedWidth(100)
 
+        self.__abort_button.clicked.connect(self.__abort_measurement)
+
         self.__next_button = QtWidgets.QPushButton("Next")
         button_layout.addWidget(self.__next_button)
         self.__next_button.setFixedWidth(100)
@@ -193,6 +195,9 @@ class Main(QtWidgets.QMainWindow):
         thread = Thread(target=self.__measurement)
         thread.start()
 
+    def __abort_measurement(self):
+        self.__measurement.abort()
+
     def __get_contacts(self):
 
         contact_inputs = [self.__contact_input_first, self.__contact_input_second,
@@ -237,7 +242,7 @@ class Main(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot()
     def __set_directory_name(self):
         """Open a dialogue to change the output directory."""
-        self.__directory_name = QtWidgets.QFileDialog.getExistingDirectoryUrl().path() + "/"
+        self.__directory_name = QtWidgets.QFileDialog.getExistingDirectory()
         self.__file_name_display.setText(self.__directory_name)
 
     def __new_data(self, data_dict):
