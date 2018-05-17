@@ -2,7 +2,7 @@ from .measurement import register, AbstractMeasurement, Contacts
 from .measurement import FloatValue, IntegerValue, DatetimeValue, BooleanValue, AbstractValue
 
 import numpy as np
-import datetime
+from datetime import datetime
 from threading import Event
 import time
 from typing import Dict, Tuple
@@ -42,11 +42,11 @@ class SMU2Probe(AbstractMeasurement):
     def outputs(self) -> Dict[str, AbstractValue]:
         return {'v': FloatValue('Voltage'),
                 'i': FloatValue('Current'),
-                'DateTime': DatetimeValue('Timestamp')}
+                'datetime': DatetimeValue('Timestamp')}
 
     @property
     def recommended_plots(self) -> Dict[str, Tuple[str, str]]:
-        return {'dummy': ('v', 'i')}
+        return {'Voltage Sweep': ('v', 'i')}
 
     def initialize(self, path: str, contacts: Tuple[str, str],
                    v: float = 0.0, i: float = 1e-6, n: int = 100,
@@ -95,7 +95,7 @@ class SMU2Probe(AbstractMeasurement):
                 outfile.write("{} {}".format(voltage, current))
 
                 # Send data point to UI for plotting:
-                self._signal_interface.emit_data((voltage, current))
+                self._signal_interface.emit_data({'v': voltage, 'i': current, 'datetime': datetime.now()})
 
             self.__deinitialize_device()
 
