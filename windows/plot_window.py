@@ -1,4 +1,6 @@
 from PyQt5.QtWidgets import QMdiSubWindow, QSizePolicy
+from io import BytesIO
+from typing import ByteString
 
 #matplotlib related pyqt5 stuff
 import matplotlib
@@ -37,6 +39,11 @@ class PlotWidget(FigureCanvas):
         self._axes.set_ylabel(self._y_label)
         self._axes.plot(x_data, y_data)
         self.draw()
+    
+    def save_figure(self, plot_path: str) -> None:
+        """Save plot to 'plot_path' as PDF."""
+        with open(plot_path, "w") as outfile:
+            outfile.write(self._figure)
 
 
 class PlotWindow(QMdiSubWindow):
@@ -58,3 +65,8 @@ class PlotWindow(QMdiSubWindow):
         """
         if data.columns.size > 1:
             self._plot_widget.update_figure(list(data.ix[:, 0]), list(data.ix[:, 1]))
+
+    def save_plot(self, file_path: str) -> None:
+        """Save this plot to file as PDF."""
+        self._plot_widget.save_figure(file_path)
+        

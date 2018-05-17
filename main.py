@@ -210,7 +210,12 @@ class Main(QtWidgets.QMainWindow):
         return self.__file_name_display.text()
 
     def __finished(self, data_dict):
-        pass
+        # Save plots:
+        for axis_label_pair in list(data_dict.keys()):
+            if axis_label_pair in self.__plot_windows.keys():
+                plot_window = self.__plot_windows[axis_label_pair]  # type: PlotWindow
+                plot_path = data_dict[axis_label_pair]  # type: str
+                plot_window.save(plot_path)
 
     def __create_input_ui(self, inputs):
         """Dynamically set left panel user input widgets.
