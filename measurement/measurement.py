@@ -142,6 +142,7 @@ class AbstractMeasurement(ABC):
         self._signal_interface = signal_interface
 
         self._path = '/'
+        self._contacts = ()
 
         self._should_stop = Event()
 
@@ -194,6 +195,9 @@ class AbstractMeasurement(ABC):
                                                               suffix=file_suffix)
 
         return join_path(self._path, new_file_name)
+
+    def _generate_file_name_prefix(self) -> str:
+        return 'contacts_{}'.format('--'.join(self._contacts))
 
     def abort(self):
         self._should_stop.set()

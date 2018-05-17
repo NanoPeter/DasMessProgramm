@@ -25,9 +25,10 @@ class SMU2Probe(AbstractMeasurement):
         self._contacts = tuple()  # type: Tuple[str, str]
         self._resource_man = None  # type: visa.ResourceManager
         self._device = None  # type: visa.Resource
+        self._file_prefix = str()
         self._max_voltage = float()
         self._current_limit = float()
-        self._number_of_points = float()
+        self._number_of_points = int()
         self._should_run = Event()
         self._should_run.clear()
 
@@ -70,6 +71,8 @@ class SMU2Probe(AbstractMeasurement):
         self._device.voltage_driven(0, i, nplc)
         self._should_run.set()
 
+        self._file_prefix = self._generate_file_name_prefix()
+
     def __call__(self) -> None:
         """Custom measurement code lives here.
 
@@ -77,9 +80,9 @@ class SMU2Probe(AbstractMeasurement):
         """
         self._signal_interface.emit_started()  # Tell the UI that measurement has begun
 
-        file_path = self._get_next_file(self._path)  # Set file path from directory path
+        file_path = self._get_next_file(self._file_prefix)  # Set file path from directory path
         with open(file_path, "w") as outfile:
-            print("DEBUG: Writing to file", self._path)
+            print("DEBUG: Writing to file", file_path)
             self.__write_header(outfile)
 
             self.__initialize_device()

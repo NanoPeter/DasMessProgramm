@@ -202,7 +202,7 @@ class Main(QtWidgets.QMainWindow):
 
         for contact_input in contact_inputs:
             if contact_input.isVisible():
-                contacts.append(contact_input.currentText())
+                contacts.append(contact_input.currentText().replace(' ', '_'))
 
         return tuple(contacts)
 
