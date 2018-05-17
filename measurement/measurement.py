@@ -7,10 +7,12 @@ from datetime import datetime
 
 from threading import Event
 
+from abc import ABC, abstractmethod
+
 from dateutil import parser
 
 from os import listdir
-from os.path import join as joinpath
+from os.path import join as join_path
 
 REGISTRY = {}
 
@@ -127,7 +129,7 @@ class SignalInterface:
         NotImplemented()
 
 
-class AbstractMeasurement(Thread):
+class AbstractMeasurement(ABC):
     """
 
     """
@@ -159,16 +161,45 @@ class AbstractMeasurement(Thread):
     def number_of_contacts(self) -> Contacts:
         return self._number_of_contacts
 
+    @abstractmethod
     def initialize(self, path, contacts, **kwargs):
-        NotImplementedError()
+        pass
 
-    def _get_next_file(self, file_name):
-        return
+    def _get_next_file(self, file_prefix: str, file_suffix: str='.dat'):
+        """
+        Looks for existing files and generates a suitable successor
+        :param file_prefix: the beginning of the file name
+        :param file_suffix: the end of the file name, normally '.dat
+        :return: full path of new file
+        """
+        file_list = listdir(self._path)
+
+        # filename has the form  {prefix}DDD{suffix}
+        filtered_file_list = [file_name
+                              for file_name in file_list
+                              if file_name.startswith(file_prefix) and file_name.endswith(file_suffix)
+                              and len(file_name[len(file_prefix):-len(file_suffix)]) == 3
+                              and file_name[len(file_prefix):-len(file_suffix)].isdigit()
+                              ]
+
+        if len(filtered_file_list) == 0:
+            return '{prefix}001{suffix}'.format(prefix=file_prefix, suffix=file_suffix)
+
+        last_file_name = sorted(filtered_file_list)[-1]
+
+        last_number = int(last_file_name[len(file_prefix):-len(file_suffix)])
+
+        new_file_name = '{prefix}{number:03d}{suffix}'.format(prefix=file_prefix,
+                                                              number=last_number + 1,
+                                                              suffix=file_suffix)
+
+        return join_path(self._path, new_file_name)
 
     def abort(self):
         self._should_stop.set()
         self.join()
 
-    def run(self):
+    @abstractmethod
+    def __call__(self):
         pass
 
