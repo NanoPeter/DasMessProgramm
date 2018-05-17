@@ -1,28 +1,30 @@
 from .measurement import register, AbstractMeasurement, Contacts
-from .measurement import FloatValue, IntegerValue, DatetimeValue, BooleanValue
+from .measurement import FloatValue, IntegerValue, DatetimeValue, BooleanValue, AbstractValue
 
 import numpy as np
 import datetime
 from threading import Event
 import time
+from typing import Dict, Tuple
+from typing.io import TextIO
 
-from visa import ResourceManager
-from sourcemeter2400 import Sourcemeter2400
+from visa import Resource, ResourceManager
+from .sourcemeter2400 import Sourcemeter2400
 
 
 @register('SourceMeter two probe voltage sweep')
 class SMU2Probe(AbstractMeasurement):
     """Voltage driven 2-probe current measurement on a sourcemeter."""
-    
+
     GPIB_RESOURCE = "GPIB::10::INSTR"
-    
-    def __init__(self, signal_interface):
+
+    def __init__(self, signal_interface) -> None:
         super().__init__(signal_interface)
         self._number_of_contacts = Contacts.TWO
         self._path = str()
-        self._contacts = tuple()
-        self._resource_man = None
-        self._device = None
+        self._contacts = tuple()  # type: Tuple[str, str]
+        self._resource_man = None  # type: visa.ResourceManager
+        self._device = None  # type: visa.Resource
         self._max_voltage = float()
         self._current_limit = float()
         self._number_of_points = float()
@@ -30,34 +32,35 @@ class SMU2Probe(AbstractMeasurement):
         self._should_run.clear()
 
     @property
-    def inputs(self):
+    def inputs(self) -> Dict[str, AbstractValue]:
         return {'v': FloatValue('Maximum Voltage', default=0.0),
                 'i': FloatValue('Current Limit', default=1e-6),
                 'n': IntegerValue('Number of Points', default=100),
                 'nplc': IntegerValue('NPLC', default=1)}
 
     @property
-    def outputs(self):
+    def outputs(self) -> Dict[str, AbstractValue]:
         return {'v': FloatValue('Voltage'),
                 'i': FloatValue('Current'),
                 'DateTime': DatetimeValue('Timestamp')}
 
     @property
-    def recommended_plots(self):
+    def recommended_plots(self) -> Dict[str, Tuple[str, str]]:
         return {'dummy': ('v', 'i')}
 
-    def initialize(self, path, contacts, v=0.0, i=1e-6, n=100, nplc=3):
-        """
+    def initialize(self, path: str, contacts: Tuple[str, str],
+                   v: float = 0.0, i: float = 1e-6, n: int = 100,
+                   nplc: int = 3) -> None:
+        """Should be called BEFORE 'call()' is executed.
 
-        :param path: Location where all the measurements shall be saved
-        :param contacts: contact pair as tuple
-        :param v: maximum voltage
-        :param i: current limit
-        :param n: number of data points to acquire
-        :param nplc: number of cycles over which to average
-        :return:
+        :param path: Directory into which all the measurements will be saved
+        :param contacts: Contact pair as tuple
+        :param v: Maximum voltage
+        :param i: Current limit
+        :param n: Number of data points to acquire
+        :param nplc: Number of cycles over which to average
         """
-        self._path = path
+        self._path = path  # TODO: Generate a file path from directory path at runtime.
         self._contacts = contacts
         self._max_voltage, self._current_limit = v, i
         self._number_of_points = n
@@ -67,37 +70,67 @@ class SMU2Probe(AbstractMeasurement):
         self._device.voltage_driven(0, i, nplc)
         self._should_run.set()
 
-    def abort(self):
-        """Stop the measurement before the next data point."""
-        self._should_run.clear()
-        
-    def run(self):
-        self._signal_interface.emit_started()
+    def call(self) -> None:
+        """Custom measurement code lives here.
 
-        with open(self._path, "w") as outfile:
-            outfile.write("# {0}\n".format(datetime.now().isoformat()))
-            outfile.write("# maximum voltage {0} V\n".format(self._max_voltage))
-            outfile.write("# current limit {0} A\n".format(self._current_limit))
-            outfile.write("Voltage Current\n")
+        This method implements the '()' operator.
+        """
+        self._signal_interface.emit_started()  # Tell the UI that measurement has begun
 
-            self._device.arm()  # Initialise GPIB.
+        file_path = self._get_next_file(self._path)  # Set file path from directory path
+        with open(file_path, "w") as outfile:
+            print("DEBUG: Writing to file", self._path)
+            self.__write_header(outfile)
+
+            self.__initialize_device()
             time.sleep(0.5)
 
             for voltage in np.linspace(0, self._max_voltage, self._number_of_points):
                 if not self._should_run.is_set():
                     print("DEBUG: Aborting measurement.")
                     break
-                
-                self._device.set_voltage(voltage)
-                voltage_str, current_str = self._device.read().split(",")  # type: Tuple[str, str]
-                voltage, current = float(voltage), float(current)
-                outfile.write("{} {}".format(voltage_str, current_str))
 
+                self._device.set_voltage(voltage)
+                voltage, current = self.__measure_data_point()
+                outfile.write("{} {}".format(voltage, current))
+
+                # Send data point to UI for plotting:
                 self._signal_interface.emit_data((voltage, current))
 
-                # De-initialise GPIB:
-                self._device.set_voltage(0)
-                self._device.disarm()
-        
-        self._signal_interface.emit_finished()
+            self.__deinitialize_device()
+
+        self._signal_interface.emit_finished(None)  # Tell the UI that measurement is done
+        # We are not passing any additional data back to the UI, hence the 'None' argument.
+
+    def abort(self) -> None:
+        """Stop the measurement before the next data point."""
+        self._should_run.clear()
+
+    def __initialize_device(self) -> None:
+        """Make device ready for measurement."""
+        self._device.arm()
+
+    def __deinitialize_device(self) -> None:
+        """Reset device to a safe state."""
+        self._device.set_voltage(0)
+        self._device.disarm()
+
+    def __write_header(self, file_handle: TextIO) -> None:
+        """Write a file header for present settings.
+
+        Arguments:
+            file_handle: The open file to write to
+        """
+        file_handle.write("# {0}\n".format(datetime.now().isoformat()))
+        file_handle.write("# maximum voltage {0} V\n".format(self._max_voltage))
+        file_handle.write("# current limit {0} A\n".format(self._current_limit))
+        file_handle.write("Voltage Current\n")
+
+    def __measure_data_point(self) -> Tuple[float, float]:
+        """Return one data point: (voltage, current).
+
+        Device must be initialised and armed.
+        """
+        voltage_str, current_str = self._device.read().split(",")  # type: Tuple[str, str]
+        return (float(voltage_str), float(current_str))
 
