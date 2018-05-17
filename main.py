@@ -6,6 +6,7 @@ from windows.plot_window import PlotWindow
 from windows.dynamic_input import DynamicInputLayout, delete_children
 import pandas as pd
 
+import os
 from threading import Thread
 
 import measurement
@@ -174,22 +175,21 @@ class Main(QtWidgets.QMainWindow):
 
         inputs = self.__dynamic_inputs_layout.get_inputs()
 
-        directory_found = False
-        while not directory_found:
-            try:
-                self.__measurement.initialize(path, contacts, **inputs)
-                directory_found = True
-            except FileNotFoundError:
-                result = QtWidgets.QMessageBox.critical(
-                    self, "Save directory not found!",
-                    "Click 'OK' to select another one or "
-                    "close this box to abort starting a measurement."
-                )
-                if result == QtWidgets.QMessageBox.Ok:
-                    self.__set_directory_name()
-                    path = self.__get_path()
-                else:
-                    return
+        while not os.path.isdir(path):
+            result = QtWidgets.QMessageBox.critical(
+                self, "Save directory not found!",
+                "Click 'OK' to select a different one or "
+                "'Cancel' to abort starting a measurement.",
+                buttons=(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+            )
+            if result == QtWidgets.QMessageBox.Ok:
+                self.__set_directory_name()
+                path = self.__get_path()
+            else:
+                return
+
+        self.__measurement.initialize(path, contacts, **inputs)
+                
                 
         self.__df = pd.DataFrame()
 
