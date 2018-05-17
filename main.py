@@ -138,18 +138,21 @@ class Main(QtWidgets.QMainWindow):
         self.__measure_button = QtWidgets.QPushButton("Measure")
         button_layout.addWidget(self.__measure_button)
         self.__measure_button.setFixedWidth(100)
+        self.__measure_button.setEnabled(False)  # Buttons disabled while no method is selected
 
         self.__measure_button.clicked.connect(self.__start__measurement)
 
         self.__abort_button = QtWidgets.QPushButton("Abort")
         button_layout.addWidget(self.__abort_button)
         self.__abort_button.setFixedWidth(100)
+        self.__abort_button.setEnabled(False)
 
         self.__abort_button.clicked.connect(self.__abort_measurement)
 
         self.__next_button = QtWidgets.QPushButton("Next")
         button_layout.addWidget(self.__next_button)
         self.__next_button.setFixedWidth(100)
+        self.__next_button.setEnabled(False)
         
         self.setCentralWidget(central_widget)
         self.__tb_window = TableWindow()
@@ -158,6 +161,9 @@ class Main(QtWidgets.QMainWindow):
         self.__plot_windows = {}
 
     def __menu_measurement_selected(self, x):
+        for button in [self.__next_button, self.__abort_button, self.__measure_button]:
+            button.setEnabled(True)
+        
         self.__measurement = measurement.REGISTRY[x](self.__signal_interface)
         self.__create_input_ui(self.__measurement.inputs)
 
@@ -189,7 +195,6 @@ class Main(QtWidgets.QMainWindow):
                 return
 
         self.__measurement.initialize(path, contacts, **inputs)
-                
                 
         self.__df = pd.DataFrame()
 
@@ -230,7 +235,6 @@ class Main(QtWidgets.QMainWindow):
         return self.__file_name_display.text()
 
     def __finished(self, data_dict):
-
         # Save plots:
         for axis_label_pair in list(data_dict.keys()):
             if axis_label_pair in self.__plot_windows.keys():
