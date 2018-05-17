@@ -6,6 +6,7 @@ from windows.plot_window import PlotWindow
 from windows.dynamic_input import DynamicInputLayout, delete_children
 import pandas as pd
 
+from threading import Thread
 
 import measurement
 from measurement.measurement import SignalInterface, Contacts
@@ -16,6 +17,7 @@ class SignalDataAcquisition(QtCore.QObject, SignalInterface):
     finished = QtCore.pyqtSignal(object)
     data = QtCore.pyqtSignal(object)
     started = QtCore.pyqtSignal()
+    aborted = QtCore.pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -29,6 +31,9 @@ class SignalDataAcquisition(QtCore.QObject, SignalInterface):
     def emit_started(self):
         self.started.emit()
 
+    def emit_aborted(self):
+        self.aborted.emit()
+
 
 class Main(QtWidgets.QMainWindow):
 
@@ -39,7 +44,6 @@ class Main(QtWidgets.QMainWindow):
         "19 IV-1", "21 IV-3", "22 IV-4","20 IV-2", "24 IV-8", "23 IV-7"
     ]
 
-    
     def __init__(self):
         super(Main, self).__init__()
 
@@ -73,7 +77,7 @@ class Main(QtWidgets.QMainWindow):
         file_name_layout.setSpacing(5)
         file_name_layout.addWidget(QtWidgets.QLabel("Save directory:"))
         self.__file_name_display = QtWidgets.QLineEdit()
-        self.__file_name_display.setFixedWidth(180)  # Also sets left panel width
+        self.__file_name_display.setFixedWidth(200)  # Also sets left panel width
         file_name_layout.addWidget(self.__file_name_display)
         self.__file_name_display.setReadOnly(True)
         self.__file_name_display.textChanged.connect(
@@ -148,20 +152,11 @@ class Main(QtWidgets.QMainWindow):
         self.__tb_window = TableWindow()
         self.__mdi.addSubWindow(self.__tb_window)
 
-        self.__df = pd.DataFrame()
-
         self.__plot_windows = {}
 
     def __menu_measurement_selected(self, x):
-        print('DEBUG', 'selected', x, measurement.REGISTRY[x])
-
         self.__measurement = measurement.REGISTRY[x](self.__signal_interface)
         self.__create_input_ui(self.__measurement.inputs)
-
-        for input in self.__measurement.inputs:
-            print(input)
-
-        self.__df = pd.DataFrame()
 
         if self.__measurement.number_of_contacts == Contacts.TWO:
             four_wire_visible = False
@@ -179,6 +174,8 @@ class Main(QtWidgets.QMainWindow):
 
         self.__measurement.initialize(path, contacts, **inputs)
 
+        self.__df = pd.DataFrame()
+
         self.__plot_windows = {}
 
         for title, pair in self.__measurement.recommended_plots.items():
@@ -193,7 +190,8 @@ class Main(QtWidgets.QMainWindow):
                 self.__mdi.addSubWindow(window)
                 window.show()
 
-        self.__measurement.start()
+        thread = Thread(target=self.__measurement)
+        thread.start()
 
     def __get_contacts(self):
 
@@ -211,7 +209,6 @@ class Main(QtWidgets.QMainWindow):
     def __get_path(self):
         return self.__file_name_display.text()
 
-            
     def __finished(self, data_dict):
         pass
 

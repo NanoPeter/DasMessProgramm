@@ -41,9 +41,9 @@ class DummyMeasurement(AbstractMeasurement):
         self._path = path
         self._contacts = contacts
 
-    def run(self):
+    def __call__(self):
         self._signal_interface.emit_started()
-
+        self._should_stop.clear()
         for i in range(self._n):
             self._signal_interface.emit_data({'Datetime': datetime.now(),
                                               'random1': random(),
