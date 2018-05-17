@@ -9,6 +9,7 @@ from typing import Dict, Tuple
 from typing.io import TextIO
 
 from visa import ResourceManager
+#TODO: handle automagic Sourcemeter choice and write this info into the measurement file
 from scientificdevices.keithley.sourcemeter2400 import Sourcemeter2400
 
 
