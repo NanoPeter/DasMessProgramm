@@ -207,7 +207,6 @@ class AbstractMeasurement(ABC):
 
     def abort(self):
         self._should_stop.set()
-        self.join()
 
     @abstractmethod
     def __call__(self):
