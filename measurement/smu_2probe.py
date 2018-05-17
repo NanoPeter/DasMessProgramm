@@ -1,5 +1,5 @@
 from .measurement import register, AbstractMeasurement, Contacts
-from .measurement import FloatValue, IntegerValue, DatetimeValue, AbstractValue, SignalInterface
+from .measurement import StringValue, FloatValue, IntegerValue, DatetimeValue, AbstractValue, SignalInterface
 
 import numpy as np
 from datetime import datetime
@@ -29,6 +29,8 @@ class SMU2Probe(AbstractMeasurement):
         self._max_voltage = float()
         self._current_limit = float()
         self._number_of_points = int()
+        self._nplc = int()
+        self._comment = str()
         self._should_run = Event()
         self._should_run.clear()
 
@@ -37,7 +39,8 @@ class SMU2Probe(AbstractMeasurement):
         return {'v': FloatValue('Maximum Voltage', default=0.0),
                 'i': FloatValue('Current Limit', default=1e-6),
                 'n': IntegerValue('Number of Points', default=100),
-                'nplc': IntegerValue('NPLC', default=1)}
+                'nplc': IntegerValue('NPLC', default=1),
+                'comment': StringValue('Comment', default='')}
 
     @property
     def outputs(self) -> Dict[str, AbstractValue]:
@@ -51,7 +54,7 @@ class SMU2Probe(AbstractMeasurement):
 
     def initialize(self, path: str, contacts: Tuple[str, str],
                    v: float = 0.0, i: float = 1e-6, n: int = 100,
-                   nplc: int = 3) -> None:
+                   nplc: int = 3, comment: str = '') -> None:
         """Should be called BEFORE 'call()' is executed.
 
         :param path: Directory into which all the measurements will be saved
@@ -60,11 +63,14 @@ class SMU2Probe(AbstractMeasurement):
         :param i: Current limit
         :param n: Number of data points to acquire
         :param nplc: Number of cycles over which to average
+        :param comment: this comment will be written into the data file
         """
         self._path = self._get_next_file(path)  # TODO: Generate a file path from directory path at runtime.
         self._contacts = contacts
         self._max_voltage, self._current_limit = v, i
         self._number_of_points = n
+        self._comment = comment
+        self._nplc = nplc
         self._resource_man = ResourceManager("@py")
         resource = self._resource_man.open_resource(self.GPIB_RESOURCE)
         self._device = Sourcemeter2400(resource)
@@ -124,8 +130,10 @@ class SMU2Probe(AbstractMeasurement):
             file_handle: The open file to write to
         """
         file_handle.write("# {0}\n".format(datetime.now().isoformat()))
+        file_handle.write('# {}\n'.format(self._comment))
         file_handle.write("# maximum voltage {0} V\n".format(self._max_voltage))
         file_handle.write("# current limit {0} A\n".format(self._current_limit))
+        file_handle.write('# nplc {}\n'.format(self._nplc))
         file_handle.write("Voltage Current\n")
 
     def __measure_data_point(self) -> Tuple[float, float]:
