@@ -124,10 +124,13 @@ class SignalInterface:
         NotImplementedError()
 
     def emit_started(self) -> None:
-        NotImplemented()
+        NotImplementedError()
 
     def emit_aborted(self) -> None:
-        NotImplemented()
+        NotImplementedError()
+
+    def emit_status_message(self, message: str) -> None:
+        NotImplementedError()
 
 
 class AbstractMeasurement(ABC):

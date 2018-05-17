@@ -9,6 +9,8 @@ import pandas as pd
 import os
 from threading import Thread
 
+from datetime import datetime
+
 import measurement
 from measurement.measurement import SignalInterface, Contacts
 from typing import Dict, List
@@ -19,6 +21,7 @@ class SignalDataAcquisition(QtCore.QObject, SignalInterface):
     data = QtCore.pyqtSignal(object)
     started = QtCore.pyqtSignal()
     aborted = QtCore.pyqtSignal()
+    status = QtCore.pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
@@ -34,6 +37,9 @@ class SignalDataAcquisition(QtCore.QObject, SignalInterface):
 
     def emit_aborted(self):
         self.aborted.emit()
+
+    def emit_status_message(self, message):
+        self.status.emit(message)
 
 
 class Main(QtWidgets.QMainWindow):
@@ -51,6 +57,9 @@ class Main(QtWidgets.QMainWindow):
         self.__signal_interface = SignalDataAcquisition()
         self.__signal_interface.finished.connect(self.__finished)
         self.__signal_interface.data.connect(self.__new_data)
+        self.__signal_interface.aborted.connect(self.__measurement_aborted)
+        self.__signal_interface.status.connect(self.__show_status)
+        self.__signal_interface.started.connect(self.__started)
 
         self.__directory_name = ""
 
@@ -153,7 +162,10 @@ class Main(QtWidgets.QMainWindow):
         button_layout.addWidget(self.__next_button)
         self.__next_button.setFixedWidth(100)
         self.__next_button.setEnabled(False)
-        
+
+        self.__statusbar = QtWidgets.QStatusBar()
+        self.setStatusBar(self.__statusbar)
+
         self.setCentralWidget(central_widget)
         self.__tb_window = TableWindow()
         self.__mdi.addSubWindow(self.__tb_window)
@@ -163,7 +175,8 @@ class Main(QtWidgets.QMainWindow):
     def __menu_measurement_selected(self, x):
         for button in [self.__next_button, self.__abort_button, self.__measure_button]:
             button.setEnabled(True)
-        
+
+        self.setWindowTitle('Das Messprogramm -- {}'.format(x))
         self.__measurement = measurement.REGISTRY[x](self.__signal_interface)
         self.__create_input_ui(self.__measurement.inputs)
 
@@ -242,6 +255,9 @@ class Main(QtWidgets.QMainWindow):
                 plot_path = data_dict[axis_label_pair]  # type: str
                 plot_window.save_plot(plot_path)
 
+        self.__show_status('Measurement finished.')
+        self.tool
+
     def __create_input_ui(self, inputs):
         """Dynamically set left panel user input widgets.
 
@@ -276,6 +292,15 @@ class Main(QtWidgets.QMainWindow):
 
         for pair, window in self.__plot_windows.items():
             window.update_data(self.__df[list(pair)])
+
+    def __measurement_aborted(self):
+        self.__show_status('Measurement aborted.')
+
+    def __show_status(self, message):
+        self.__statusbar.showMessage('{} - {}'.format(datetime.now().isoformat(), message))
+
+    def __started(self):
+        self.__show_status('Measurement running ...')
 
 
 if __name__ == '__main__':

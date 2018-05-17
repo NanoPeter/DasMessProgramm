@@ -4,7 +4,7 @@ from .measurement import AbstractValue, FloatValue, IntegerValue, DatetimeValue
 from random import random
 from datetime import datetime
 from time import sleep
-from typing import Tuple
+from typing import Tuple, Dict
 from typing.io import TextIO
 
 
