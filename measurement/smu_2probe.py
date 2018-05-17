@@ -70,7 +70,7 @@ class SMU2Probe(AbstractMeasurement):
         self._device.voltage_driven(0, i, nplc)
         self._should_run.set()
 
-    def call(self) -> None:
+    def __call__(self) -> None:
         """Custom measurement code lives here.
 
         This method implements the '()' operator.
