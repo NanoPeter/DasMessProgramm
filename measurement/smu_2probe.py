@@ -9,7 +9,7 @@ from typing import Dict, Tuple
 from typing.io import TextIO
 
 from visa import Resource, ResourceManager
-from .sourcemeter2400 import Sourcemeter2400
+from scientificdevices.keithley.sourcemeter2400 import Sourcemeter2400
 
 
 @register('SourceMeter two probe voltage sweep')
