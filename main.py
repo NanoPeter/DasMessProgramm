@@ -84,10 +84,10 @@ class Main(QtWidgets.QMainWindow):
             lambda text: self.__file_name_display.setToolTip(text)
         )
         self.__file_name_display.setText(self.__directory_name)
-        file_name_button = QtWidgets.QPushButton()
-        file_name_layout.addWidget(file_name_button)
-        file_name_button.setText("Browse...")
-        file_name_button.clicked.connect(self.__set_directory_name)
+        directory_button = QtWidgets.QPushButton()
+        file_name_layout.addWidget(directory_button)
+        directory_button.setText("Browse...")
+        directory_button.clicked.connect(self.__set_directory_name)
 
         contacts_layout = QtWidgets.QVBoxLayout()
         self.__inputs_layout.addLayout(contacts_layout)
@@ -174,8 +174,23 @@ class Main(QtWidgets.QMainWindow):
 
         inputs = self.__dynamic_inputs_layout.get_inputs()
 
-        self.__measurement.initialize(path, contacts, **inputs)
-
+        directory_found = False
+        while not directory_found:
+            try:
+                self.__measurement.initialize(path, contacts, **inputs)
+                directory_found = True
+            except FileNotFoundError:
+                result = QtWidgets.QMessageBox.critical(
+                    self, "Save directory not found!",
+                    "Click 'OK' to select another one or "
+                    "close this box to abort starting a measurement."
+                )
+                if result == QtWidgets.QMessageBox.Ok:
+                    self.__set_directory_name()
+                    path = self.__get_path()
+                else:
+                    return
+                
         self.__df = pd.DataFrame()
 
         self.__plot_windows = {}
