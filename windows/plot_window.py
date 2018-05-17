@@ -13,7 +13,7 @@ from pandas import DataFrame
 
 class PlotWidget(FigureCanvas):
 
-    def __init__(self, parent=None, width=5, height=4, dpi=100, title='', x_label='', y_label=''):
+    def __init__(self, parent=None, width=5, height=4, dpi=72, title='', x_label='', y_label=''):
         self._figure = Figure(figsize=(width, height), dpi=dpi)
         self._axes = self._figure.add_subplot(111)
 
@@ -42,8 +42,7 @@ class PlotWidget(FigureCanvas):
     
     def save_figure(self, plot_path: str) -> None:
         """Save plot to 'plot_path' as PDF."""
-        with open(plot_path, "w") as outfile:
-            outfile.write(self._figure)
+        self._figure.savefig(plot_path)
 
 
 class PlotWindow(QMdiSubWindow):

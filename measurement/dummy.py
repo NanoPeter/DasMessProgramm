@@ -55,6 +55,7 @@ class DummyMeasurement(AbstractMeasurement):
             plot_file_name_prefix = self._generate_plot_file_name_prefix(pair)
             self._recommended_plot_file_paths[pair] = self._get_next_file(plot_file_name_prefix, file_suffix='.pdf')
 
+
     def __call__(self):
         self._signal_interface.emit_started()
         self._should_stop.clear()
