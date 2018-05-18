@@ -74,7 +74,7 @@ class DummyMeasurement(AbstractMeasurement):
                                                   'random2': random()})
                 sleep(1)
                 if self._should_stop.is_set():
-                    self.__signal_interface.emit_aborted()
+                    self._signal_interface.emit_aborted()
                     break
 
         self._signal_interface.emit_finished(self._recommended_plot_file_paths)
