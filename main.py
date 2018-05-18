@@ -12,8 +12,8 @@ from threading import Thread
 from datetime import datetime
 
 import measurement
-from measurement.measurement import SignalInterface, Contacts
-from typing import Dict, List
+from measurement.measurement import SignalInterface, Contacts, AbstractMeasurement
+from typing import Dict, List, Union, Tuple
 
 
 class SignalDataAcquisition(QtCore.QObject, SignalInterface):
@@ -65,6 +65,9 @@ class Main(QtWidgets.QMainWindow):
 
         self.__directory_name = ""
 
+        self._measurement_class = AbstractMeasurement
+        self._measurement = None # type: AbstractMeasurement
+
         self.__init_gui()
 
     def __init_gui(self):
@@ -72,13 +75,13 @@ class Main(QtWidgets.QMainWindow):
         bar = self.menuBar()
         method = bar.addMenu('Method')
 
-        registry = measurement.REGISTRY.keys()
-
         self._menu_method_actions = [] # type: List[QtWidgets.QAction]
 
-        for entry in registry:
+        for entry, cls in measurement.REGISTRY.items():
             action = QtWidgets.QAction(entry)
-            action.triggered.connect(lambda *args, x=entry: self.__menu_measurement_selected(x))
+            action.triggered.connect(lambda *args,
+                                            title=entry,
+                                            cls=cls: self.__menu_measurement_selected(title, cls))
             method.addAction(action)
             self._menu_method_actions.append(action)
 
@@ -179,18 +182,19 @@ class Main(QtWidgets.QMainWindow):
 
         self.__plot_windows = {}
 
-    def __menu_measurement_selected(self, x):
+    def __menu_measurement_selected(self, title, cls: AbstractMeasurement):
         for button in [self.__next_button, self.__abort_button, self.__measure_button]:
             button.setEnabled(True)
 
-        self.setWindowTitle('{} -- {}'.format(self.TITLE, x))
-        self.__measurement = measurement.REGISTRY[x](self.__signal_interface)
-        self.__create_input_ui(self.__measurement.inputs)
+        self.setWindowTitle('{} -- {}'.format(self.TITLE, title))
+        self.__create_input_ui(cls.inputs())
+        self._measurement_class = cls
 
-        if self.__measurement.number_of_contacts == Contacts.TWO:
+        if cls.number_of_contacts() == Contacts.TWO:
             four_wire_visible = False
-        elif self.__measurement.number_of_contacts == Contacts.FOUR:
+        elif cls.number_of_contacts() == Contacts.FOUR:
             four_wire_visible = True
+
         self.__sense_contacts_label.setVisible(four_wire_visible)
         self.__contact_input_third.setVisible(four_wire_visible)
         self.__contact_input_fourth.setVisible(four_wire_visible)
@@ -214,25 +218,25 @@ class Main(QtWidgets.QMainWindow):
             else:
                 return
 
-        self.__measurement.initialize(path, contacts, **inputs)
+        self._measurement = self._measurement_class(self.__signal_interface,
+                                                    path, contacts, **inputs)
                 
         self.__df = pd.DataFrame()
 
         self.__plot_windows = {}
 
-        for title, pair in self.__measurement.recommended_plots.items():
+        for title, pair in self._measurement.recommended_plots.items():
             if pair not in self.__plot_windows:
-                x_label = self.__measurement.outputs[pair[0]].fullname
-                y_label = self.__measurement.outputs[pair[1]].fullname
-
-                print(x_label, y_label)
+                outputs = self._measurement_class.outputs()
+                x_label = outputs[pair[0]].fullname
+                y_label = outputs[pair[1]].fullname
 
                 window = PlotWindow(title=title, x_label=x_label, y_label=y_label)
                 self.__plot_windows[pair] = window
                 self.__mdi.addSubWindow(window)
                 window.show()
 
-        thread = Thread(target=self.__measurement)
+        thread = Thread(target=self._measurement)
         thread.start()
 
         self._set_ui_state(False)
@@ -252,9 +256,10 @@ class Main(QtWidgets.QMainWindow):
         self.__contact_input_fourth.setEnabled(enable)
 
     def __abort_measurement(self):
-        self.__measurement.abort()
+        self._measurement.abort()
 
-    def __get_contacts(self):
+    def __get_contacts(self) -> Union[Tuple[str, str],
+                                      Tuple[str, str, str, str]]:
 
         contact_inputs = [self.__contact_input_first, self.__contact_input_second,
                           self.__contact_input_third, self.__contact_input_fourth]

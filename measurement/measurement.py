@@ -137,38 +137,36 @@ class AbstractMeasurement(ABC):
     """
 
     """
-    def __init__(self, signal_interface: SignalInterface) -> None:
+    def __init__(self,
+                 signal_interface: SignalInterface,
+                 path: str,
+                 contacts: Union[Tuple, Tuple[str, str], Tuple[str, str, str, str]],
+                 **kwargs) -> None:
         """
         :param signal_interface: An object which is derived from SignalInterface
         """
         super().__init__()
-        self._number_of_contacts = Contacts.TWO
         self._signal_interface = signal_interface
-
-        self._path = '/'
-        self._contacts = ()  # type: Union[Tuple, Tuple[str, str], Tuple[str, str, str, str]]
-
+        self._path = path
+        self._contacts = contacts
         self._should_stop = Event()
+        self._recommended_plot_file_paths = {}
 
-    @property
-    def inputs(self) -> Dict:
+    @staticmethod
+    def inputs() -> Dict[str, AbstractValue]:
+        return {}
+
+    @staticmethod
+    def outputs() -> Dict[str, AbstractValue]:
         return {}
 
     @property
-    def outputs(self) -> Dict:
-        return {}
-
-    @property
-    def recommended_plots(self) -> List:
+    def recommended_plots(self) -> Dict[str, Tuple[str, str]]:
         return []
 
-    @property
-    def number_of_contacts(self) -> Contacts:
-        return self._number_of_contacts
-
-    @abstractmethod
-    def initialize(self, path, contacts, **kwargs) -> None:
-        pass
+    @staticmethod
+    def number_of_contacts() -> Contacts:
+        return Contacts.TWO
 
     def _get_next_file(self, file_prefix: str, file_suffix: str = '.dat') -> str:
         """
@@ -209,10 +207,28 @@ class AbstractMeasurement(ABC):
     def _generate_plot_file_name_prefix(self, pair) -> str:
         return 'contacts_{}_plot-{}-{}_'.format('--'.join(self._contacts), pair[0], pair[1])
 
+    def _generate_all_file_names(self) -> None:
+        file_prefix = self._generate_file_name_prefix()
+        self._file_path = self._get_next_file(file_prefix)
+
+        self._recommended_plot_file_paths = {}
+        for title, pair in self.recommended_plots.items():
+            plot_file_name_prefix = self._generate_plot_file_name_prefix(pair)
+            self._recommended_plot_file_paths[pair] = self._get_next_file(plot_file_name_prefix, file_suffix='.pdf')
+
     def abort(self) -> None:
         self._should_stop.set()
 
-    @abstractmethod
     def __call__(self) -> None:
+        self._signal_interface.emit_started()
+        self._should_stop.clear()
+        self._generate_all_file_names()
+        print('writing to {}'.format(self._file_path))
+        with open(self._file_path, 'w') as file_handle:
+            self._measure(file_handle)
+        self._signal_interface.emit_finished(self._recommended_plot_file_paths)
+
+    @abstractmethod
+    def _measure(self, file_handle) -> None:
         pass
 
