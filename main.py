@@ -50,6 +50,8 @@ class Main(QtWidgets.QMainWindow):
         "17 III-7", "18 III-8", "14 III-2", "16 III-4", "15 III-3", "13 III-1",
         "19 IV-1", "21 IV-3", "22 IV-4","20 IV-2", "24 IV-8", "23 IV-7"
     ]
+    
+    TITLE = 'DasMessProgramm'
 
     def __init__(self):
         super(Main, self).__init__()
@@ -66,14 +68,19 @@ class Main(QtWidgets.QMainWindow):
         self.__init_gui()
 
     def __init_gui(self):
-        self.setWindowTitle('DasMessProgramm')
+        self.setWindowTitle(self.TITLE)
         bar = self.menuBar()
         method = bar.addMenu('Method')
 
         registry = measurement.REGISTRY.keys()
 
+        self._menu_method_actions = [] # type: List[QtWidgets.QAction]
+
         for entry in registry:
-            method.addAction(entry, lambda x=entry: self.__menu_measurement_selected(x))
+            action = QtWidgets.QAction(entry)
+            action.triggered.connect(lambda *args, x=entry: self.__menu_measurement_selected(x))
+            method.addAction(action)
+            self._menu_method_actions.append(action)
 
         central_layout = QtWidgets.QHBoxLayout()
         central_widget = QtWidgets.QWidget()
@@ -94,10 +101,10 @@ class Main(QtWidgets.QMainWindow):
             lambda text: self.__file_name_display.setToolTip(text)
         )
         self.__file_name_display.setText(self.__directory_name)
-        directory_button = QtWidgets.QPushButton()
-        file_name_layout.addWidget(directory_button)
-        directory_button.setText("Browse...")
-        directory_button.clicked.connect(self.__set_directory_name)
+        self._directory_button = QtWidgets.QPushButton()
+        file_name_layout.addWidget(self._directory_button)
+        self._directory_button.setText("Browse...")
+        self._directory_button.clicked.connect(self.__set_directory_name)
 
         contacts_layout = QtWidgets.QVBoxLayout()
         self.__inputs_layout.addLayout(contacts_layout)
@@ -176,7 +183,7 @@ class Main(QtWidgets.QMainWindow):
         for button in [self.__next_button, self.__abort_button, self.__measure_button]:
             button.setEnabled(True)
 
-        self.setWindowTitle('Das Messprogramm -- {}'.format(x))
+        self.setWindowTitle('{} -- {}'.format(self.TITLE, x))
         self.__measurement = measurement.REGISTRY[x](self.__signal_interface)
         self.__create_input_ui(self.__measurement.inputs)
 
@@ -228,6 +235,22 @@ class Main(QtWidgets.QMainWindow):
         thread = Thread(target=self.__measurement)
         thread.start()
 
+        self._set_ui_state(False)
+
+    def _set_ui_state(self, enable: bool):
+        for action in self._menu_method_actions:
+            action.setEnabled(enable)
+
+        self.__abort_button.setEnabled(not enable)
+        self.__measure_button.setEnabled(enable)
+        self.__next_button.setEnabled(enable)
+        self.__dynamic_inputs_layout.setEnabled(enable)
+        self._directory_button.setEnabled(enable)
+        self.__contact_input_first.setEnabled(enable)
+        self.__contact_input_second.setEnabled(enable)
+        self.__contact_input_third.setEnabled(enable)
+        self.__contact_input_fourth.setEnabled(enable)
+
     def __abort_measurement(self):
         self.__measurement.abort()
 
@@ -256,7 +279,8 @@ class Main(QtWidgets.QMainWindow):
                 plot_window.save_plot(plot_path)
 
         self.__show_status('Measurement finished.')
-        self.tool
+        self._set_ui_state(True)
+
 
     def __create_input_ui(self, inputs):
         """Dynamically set left panel user input widgets.
