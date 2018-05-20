@@ -9,6 +9,7 @@ from typing import Dict, Tuple
 from typing.io import TextIO
 
 from visa import ResourceManager
+import visa
 #TODO: handle automagic Sourcemeter choice and write this info into the measurement file
 from scientificdevices.keithley.sourcemeter2400 import Sourcemeter2400
 
@@ -18,6 +19,7 @@ class SMU2Probe(AbstractMeasurement):
     """Voltage driven 2-probe current measurement on a sourcemeter."""
 
     GPIB_RESOURCE = "GPIB::10::INSTR"
+    VISA_LIBRARY = "@py"
 
     def __init__(self, signal_interface: SignalInterface,
                  path: str, contacts: Tuple[str, str],
@@ -30,7 +32,7 @@ class SMU2Probe(AbstractMeasurement):
         self._nplc = nplc
         self._comment = comment
 
-        resource_man = ResourceManager("@py")
+        resource_man = ResourceManager(self.VISA_LIBRARY)
         resource = resource_man.open_resource(self.GPIB_RESOURCE)
         self._device = Sourcemeter2400(resource)
         self._device.voltage_driven(0, i, nplc)
@@ -109,3 +111,24 @@ class SMU2Probe(AbstractMeasurement):
         voltage_str, current_str = self._device.read().split(",")  # type: Tuple[str, str]
         return (float(voltage_str), float(current_str))
 
+
+@register("SIMULATED SourceMeter two probe voltage sweep")
+class SMU2ProbeSimulation(SMU2Probe):
+    """PyVisa-sim compatible adaptation of SMU2Probe for testing."""
+
+    VISA_LIBRARY = "test_devices.yaml@sim"
+
+    def __init__(self, signal_interface: SignalInterface,
+                 path: str, contacts: Tuple[str, str],
+                 v: float = 0.0, i: float = 1e-6, n: int = 100,
+                 nplc: int = 1, comment: str = '') -> None:
+        super().__init__(signal_interface, path, contacts,
+                         v, i, n, nplc, comment)
+
+        # Set some things that are needed to get pyvisa-sim running:
+        self._device._Sourcemeter2400__dev.write_termination = "\n"
+        self._device._Sourcemeter2400__dev.read_termination = "\n"
+        self._device._Sourcemeter2400__dev.set_visa_attribute(
+            visa.constants.VI_ATTR_TERMCHAR_EN,
+            visa.constants.VI_TRUE
+        )

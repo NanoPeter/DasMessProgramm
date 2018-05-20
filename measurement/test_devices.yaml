@@ -1,0 +1,112 @@
+spec: "1.0"
+devices:
+  sourcemeter2400:
+    eom:
+      GPIB INSTR:
+        q: "\n"
+        r: "\n"
+    error:
+      command_error: CMD_ERROR
+      query_error: QUERY_ERROR
+    dialogues:
+      - q: "*IDN?"
+        r: "DUMMY Keithley Sourcemeter 2400"
+    properties:
+      voltage_current:
+        default: "0.23456, 0.56789"  # This needs to be a static string, since composite numeric values are not supported by pyvisa-sim (?)
+        getter:
+          q: ":read?"
+          r: "{:s}"
+        specs:
+          type: str
+      sense_function:
+        default: "voltage"
+        setter:
+          q: ":sense:function {:s}"
+        specs:
+          type: str
+          valid: ["voltage", "current"]
+      source_function:
+        default: "voltage" 
+        setter:
+          q: ":source:function {:s}"
+        specs:
+          type: str
+          valid: ["voltage", "current"]
+      sense_current_range_auto:
+        default: "off"
+        setter:
+          q: ":sense:current:range:auto {:s}"
+        specs:
+          type: str
+          valid: ["on", "off"]
+      source_voltage_range_auto:
+        default: "off"
+        setter:
+          q: ":source:voltage:range:auto {:s}"
+        specs:
+          type: str
+          valid: ["on", "off"]
+      sense_current_protection:
+        default: 0
+        setter:
+          q: ":sense:current:protection {:f}"
+        specs:
+          type: float
+      sense_voltage_protection:
+        default: 0
+        setter:
+          q: ":sense:voltage:protection {:f}"
+        specs:
+          type: float
+      sense_current_nplcycles:
+        default: 1
+        setter:
+          q: ":sense:current:nplcycles {:d}"
+        specs:
+          type: int
+          min: 1
+      sense_voltage_nplcycles:
+        default: 1
+        setter:
+          q: ":sense:voltage:nplcycles {:d}"
+        specs:
+          type: int
+          min: 1
+      sense_average:
+        default: "off"
+        setter:
+          q: ":sense:average {:s}"
+        specs:
+          type: str
+          valid: ["on", "off"]
+      output_state:
+        default: 0
+        setter:
+          q: ":output:state {:d}"
+        specs:
+          type: int
+          valid: [0, 1]
+      source_current_level:
+        default: 0
+        setter:
+          q: ":source:current:level {:f}"
+        specs:
+          type: float
+      source_voltage_level:
+        default: 0
+        setter:
+          q: ":source:voltage:level {:f}"
+        specs:
+          type: float
+      format_elements:
+        default: "voltage, current"
+        setter:
+          q: ":format:elements {:s}"
+        specs:
+          type: str
+          valid: ["voltage, current"]
+
+resources:
+  GPIB::10::INSTR:
+    device: sourcemeter2400
