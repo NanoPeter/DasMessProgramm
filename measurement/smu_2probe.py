@@ -65,7 +65,7 @@ class SMU2Probe(AbstractMeasurement):
         time.sleep(0.5)
 
         for voltage in np.linspace(0, self._max_voltage, self._number_of_points):
-            if not self._should_stop.is_set():
+            if self._should_stop.is_set():
                 print("DEBUG: Aborting measurement.")
                 self._signal_interface.emit_aborted()
                 break
@@ -78,10 +78,6 @@ class SMU2Probe(AbstractMeasurement):
             self._signal_interface.emit_data({'v': voltage, 'i': current, 'datetime': datetime.now()})
 
         self.__deinitialize_device()
-
-    def abort(self) -> None:
-        """Stop the measurement before the next data point."""
-        self._should_run.clear()
 
     def __initialize_device(self) -> None:
         """Make device ready for measurement."""
