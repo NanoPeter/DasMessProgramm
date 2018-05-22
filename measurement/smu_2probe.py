@@ -20,6 +20,7 @@ class SMU2Probe(AbstractMeasurement):
 
     GPIB_RESOURCE = "GPIB::10::INSTR"
     VISA_LIBRARY = "@py"
+    QUERY_DELAY = 0.0
 
     def __init__(self, signal_interface: SignalInterface,
                  path: str, contacts: Tuple[str, str],
@@ -33,7 +34,7 @@ class SMU2Probe(AbstractMeasurement):
         self._comment = comment
 
         resource_man = ResourceManager(self.VISA_LIBRARY)
-        resource = resource_man.open_resource(self.GPIB_RESOURCE)
+        resource = resource_man.open_resource(self.GPIB_RESOURCE, query_delay=self.QUERY_DELAY)
         self._device = Sourcemeter2400(resource)
         self._device.voltage_driven(0, i, nplc)
 
@@ -117,6 +118,7 @@ class SMU2ProbeSimulation(SMU2Probe):
     """PyVisa-sim compatible adaptation of SMU2Probe for testing."""
 
     VISA_LIBRARY = "measurement/test_devices.yaml@sim"
+    QUERY_DELAY = 0.1
 
     def __init__(self, signal_interface: SignalInterface,
                  path: str, contacts: Tuple[str, str],
