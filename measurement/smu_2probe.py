@@ -5,7 +5,7 @@ import numpy as np
 from datetime import datetime
 from threading import Event
 import time
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List
 from typing.io import TextIO
 
 from visa import ResourceManager
@@ -57,8 +57,8 @@ class SMU2Probe(AbstractMeasurement):
                 'datetime': DatetimeValue('Timestamp')}
 
     @property
-    def recommended_plots(self) -> Dict[str, Tuple[str, str]]:
-        return [PlotRecommendation('Voltage Sweep', x_label='v', y_label='i')]
+    def recommended_plots(self) -> List[PlotRecommendation]:
+        return [PlotRecommendation('Voltage Sweep', x_label='v', y_label='i', show_fit=True)]
 
     def _measure(self, file_handle) -> None:
         """Custom measurement code lives here.
