@@ -116,7 +116,7 @@ class SMU2Probe(AbstractMeasurement):
 class SMU2ProbeSimulation(SMU2Probe):
     """PyVisa-sim compatible adaptation of SMU2Probe for testing."""
 
-    VISA_LIBRARY = "test_devices.yaml@sim"
+    VISA_LIBRARY = "measurement/test_devices.yaml@sim"
 
     def __init__(self, signal_interface: SignalInterface,
                  path: str, contacts: Tuple[str, str],
