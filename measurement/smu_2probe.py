@@ -109,8 +109,7 @@ class SMU2Probe(AbstractMeasurement):
 
         Device must be initialised and armed.
         """
-        voltage_str, current_str = self._device.read().split(",")  # type: Tuple[str, str]
-        return (float(voltage_str), float(current_str))
+        return self._device.read()
 
 
 @register("SIMULATED SourceMeter two probe voltage sweep")
@@ -128,9 +127,9 @@ class SMU2ProbeSimulation(SMU2Probe):
                          v, i, n, nplc, comment)
 
         # Set some things that are needed to get pyvisa-sim running:
-        self._device._Sourcemeter2400__dev.write_termination = "\n"
-        self._device._Sourcemeter2400__dev.read_termination = "\n"
-        self._device._Sourcemeter2400__dev.set_visa_attribute(
+        self._device._dev.write_termination = "\n"
+        self._device._dev.read_termination = "\n"
+        self._device._dev.set_visa_attribute(
             visa.constants.VI_ATTR_TERMCHAR_EN,
             visa.constants.VI_TRUE
         )
