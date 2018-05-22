@@ -72,24 +72,13 @@ class Main(QtWidgets.QMainWindow):
 
     def __init_gui(self):
         self.setWindowTitle(self.TITLE)
-        bar = self.menuBar()
-        method = bar.addMenu('Method')
-
-        self._menu_method_actions = [] # type: List[QtWidgets.QAction]
-
-        for entry, cls in measurement.REGISTRY.items():
-            action = QtWidgets.QAction(entry)
-            action.triggered.connect(lambda *args,
-                                            title=entry,
-                                            cls=cls: self.__menu_measurement_selected(title, cls))
-            method.addAction(action)
-            self._menu_method_actions.append(action)
 
         central_layout = QtWidgets.QHBoxLayout()
         central_widget = QtWidgets.QWidget()
         central_widget.setLayout(central_layout)
 
         self.__inputs_layout = QtWidgets.QVBoxLayout()
+        self.__inputs_layout.setSpacing(10)
         central_layout.addLayout(self.__inputs_layout)
 
         file_name_layout = QtWidgets.QVBoxLayout()
@@ -111,7 +100,7 @@ class Main(QtWidgets.QMainWindow):
 
         contacts_layout = QtWidgets.QVBoxLayout()
         self.__inputs_layout.addLayout(contacts_layout)
-        contacts_layout.setSpacing(5)
+        contacts_layout.setSpacing(3)
         contacts_layout.addWidget(QtWidgets.QLabel("Contacts:"))
         first_contact_pair = QtWidgets.QHBoxLayout()
         contacts_layout.addLayout(first_contact_pair)
@@ -141,6 +130,21 @@ class Main(QtWidgets.QMainWindow):
         self.__contact_input_fourth.setCurrentIndex(3)
         self.__contact_input_fourth.setFixedWidth(80)
 
+        method_layout = QtWidgets.QVBoxLayout()
+        method_layout.setSpacing(3)
+        self.__inputs_layout.addLayout(method_layout)
+        method_layout.addWidget(QtWidgets.QLabel("Measurement method:"))
+        self.__method_selection_box = QtWidgets.QComboBox()
+        self.__method_selection_box.setFixedWidth(200)
+        method_layout.addWidget(self.__method_selection_box)
+        available_methods = list(measurement.REGISTRY.keys())  # type: List[str]
+        available_methods.sort()
+        for method in available_methods:
+            self.__method_selection_box.addItem(method)
+        self.__method_selection_box.currentTextChanged.connect(
+            lambda title: self.__measurement_method_selected(title, measurement.REGISTRY[title])
+        )
+        
         # TODO: make left hand side scrollable:
         self.__dynamic_inputs_layout = None  # Initialised on-demand from menu bar
         self.__inputs_layout.addStretch()
@@ -182,7 +186,7 @@ class Main(QtWidgets.QMainWindow):
 
         self.__plot_windows = {}
 
-    def __menu_measurement_selected(self, title, cls: AbstractMeasurement):
+    def __measurement_method_selected(self, title, cls: AbstractMeasurement):
         for button in [self.__next_button, self.__abort_button, self.__measure_button]:
             button.setEnabled(True)
 
@@ -242,9 +246,7 @@ class Main(QtWidgets.QMainWindow):
         self._set_ui_state(False)
 
     def _set_ui_state(self, enable: bool):
-        for action in self._menu_method_actions:
-            action.setEnabled(enable)
-
+        self.__method_selection_box.setEnabled(enable)
         self.__abort_button.setEnabled(not enable)
         self.__measure_button.setEnabled(enable)
         self.__next_button.setEnabled(enable)
@@ -286,7 +288,6 @@ class Main(QtWidgets.QMainWindow):
         self.__show_status('Measurement finished.')
         self._set_ui_state(True)
 
-
     def __create_input_ui(self, inputs):
         """Dynamically set left panel user input widgets.
 
@@ -300,7 +301,7 @@ class Main(QtWidgets.QMainWindow):
             del self.__dynamic_inputs_layout
         
         self.__dynamic_inputs_layout = DynamicInputLayout(inputs)
-        self.__dynamic_inputs_layout.setSpacing(15)
+        self.__dynamic_inputs_layout.setSpacing(10)
 
         # Remove old stretch before adding new one below:
         old_stretch = self.__inputs_layout.takeAt(self.__inputs_layout.count() - 1)
