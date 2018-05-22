@@ -1,10 +1,10 @@
-from .measurement import register, AbstractMeasurement, Contacts, SignalInterface
+from .measurement import register, AbstractMeasurement, Contacts, SignalInterface, PlotRecommendation
 from .measurement import AbstractValue, FloatValue, IntegerValue, DatetimeValue
 
 from random import random
 from datetime import datetime
 from time import sleep
-from typing import Tuple, Dict
+from typing import Tuple, Dict, List
 from typing.io import TextIO
 
 
@@ -31,9 +31,12 @@ class DummyMeasurement(AbstractMeasurement):
         return Contacts.TWO
 
     @property
-    def recommended_plots(self) -> Dict[str, Tuple[str, str]]:
-        return {'Some Time-dep': ('datetime', 'random1'),
-                'Random Correlation': ('random1', 'random2')}
+    def recommended_plots(self) -> List[PlotRecommendation]:
+        return [PlotRecommendation('Some Time-Dep',
+                                   x_label='datetime', y_label='random1'),
+                PlotRecommendation('Random Correlation',
+                                   x_label='random1', y_label='random2',
+                                   show_fit=True)]
 
     def _measure(self, file_handle) -> None:
         self.__print_header(file_handle)

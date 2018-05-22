@@ -15,6 +15,10 @@ from dateutil import parser
 from os import listdir
 from os.path import join as join_path
 
+import numpy as np
+
+from typing import List
+
 REGISTRY = {}
 
 
@@ -133,6 +137,46 @@ class SignalInterface:
         NotImplementedError()
 
 
+class PlotRecommendation:
+    def __init__(self, title: str, x_label: str, y_label: str, show_fit: bool=False):
+        self._title = title
+        self._xlabel = x_label
+        self._ylabel = y_label
+        self._show_fit = show_fit
+
+    @property
+    def show_fit(self):
+        return self._show_fit
+
+    @property
+    def title(self):
+        return self._title
+
+    @property
+    def x_label(self):
+        return self._xlabel
+
+    @property
+    def y_label(self):
+        return self._ylabel
+
+    def fit(self, x_data: List[float], y_data: List[float]):
+        """
+        calculates a linear fit and returns the fit parameters and the fit data to plot
+        :param x_data: list of x data
+        :param y_data:  list of y data
+        :return: A Dictionary with the fitted Data and tuple with xs and ys of the fit
+        """
+
+        m, b = np.polyfit(x_data, y_data, 1)
+
+        x = np.array([np.min(x_data), np.max(x_data)])
+        y = x * m + b
+
+        return {'m': m, 'b': b}, np.array([x, y]).T
+
+
+
 class AbstractMeasurement(ABC):
     """
 
@@ -161,7 +205,7 @@ class AbstractMeasurement(ABC):
         return {}
 
     @property
-    def recommended_plots(self) -> Dict[str, Tuple[str, str]]:
+    def recommended_plots(self) -> List[PlotRecommendation]:
         return []
 
     @staticmethod
@@ -212,9 +256,11 @@ class AbstractMeasurement(ABC):
         self._file_path = self._get_next_file(file_prefix)
 
         self._recommended_plot_file_paths = {}
-        for title, pair in self.recommended_plots.items():
+        for recommendation in self.recommended_plots:
+            pair = (recommendation.x_label, recommendation.y_label)
             plot_file_name_prefix = self._generate_plot_file_name_prefix(pair)
             self._recommended_plot_file_paths[pair] = self._get_next_file(plot_file_name_prefix, file_suffix='.pdf')
+
 
     def abort(self) -> None:
         self._should_stop.set()

@@ -1,6 +1,4 @@
 from PyQt5.QtWidgets import QMdiSubWindow, QSizePolicy
-from io import BytesIO
-from typing import ByteString
 
 #matplotlib related pyqt5 stuff
 import matplotlib
@@ -13,15 +11,14 @@ from typing import List
 
 
 class PlotWidget(FigureCanvas):
-
-    def __init__(self, parent=None, width: int = 5, height: int = 4, dpi: int = 72,
-                 title: str = '', x_label: str = '', y_label: str = '') -> None:
+    def __init__(self, recommendation, parent=None, width: int = 5,
+                 height: int = 4, dpi: int = 72, x_axis_label: str='', y_axis_label: str='') -> None:
         self._figure = Figure(figsize=(width, height), dpi=dpi)
         self._axes = self._figure.add_subplot(111)
 
-        self._title = title
-        self._x_label = x_label
-        self._y_label = y_label
+        self._recommendation = recommendation
+        self._x_axis_label = x_axis_label
+        self._y_axis_label = y_axis_label
 
         super().__init__(self._figure)
         self.setParent(parent)
@@ -31,9 +28,12 @@ class PlotWidget(FigureCanvas):
 
     def update_figure(self, x_data: List[float], y_data: List[float]) -> None:
         self._axes.cla()
-        self._axes.set_title(self._title)
-        self._axes.set_xlabel(self._x_label)
-        self._axes.set_ylabel(self._y_label)
+        self._axes.set_title(self._recommendation.title)
+        self._axes.set_xlabel(self._x_axis_label)
+        self._axes.set_ylabel(self._y_axis_label)
+        self.add_figure(x_data, y_data)
+
+    def add_figure(self, x_data: List[float], y_data: List[float]) -> None:
         self._axes.plot(x_data, y_data)
         self.draw()
     
@@ -45,12 +45,16 @@ class PlotWidget(FigureCanvas):
 class PlotWindow(QMdiSubWindow):
     """This is a simple sub window to show a plot of data
     """
-    def __init__(self, title: str = '', x_label: str = '', y_label: str = '') -> None:
+    def __init__(self, plot_recommendation,
+                 x_axis_label: str, y_axis_label: str) -> None:
         super().__init__()
 
-        self.setWindowTitle(title)
+        self._recommendation = plot_recommendation
 
-        self._plot_widget = PlotWidget(title=title, x_label=x_label, y_label=y_label)
+        self.setWindowTitle(plot_recommendation.title)
+
+        self._plot_widget = PlotWidget(plot_recommendation,
+                                       x_axis_label=x_axis_label, y_axis_label=y_axis_label)
         self.setWidget(self._plot_widget)
 
     def update_data(self, data: DataFrame) -> None:
@@ -60,7 +64,12 @@ class PlotWindow(QMdiSubWindow):
         :return:
         """
         if data.columns.size > 1:
-            self._plot_widget.update_figure(list(data.ix[:, 0]), list(data.ix[:, 1]))
+            x_data = list(data.ix[:, 0])
+            y_data = list(data.ix[:, 1])
+            self._plot_widget.update_figure(x_data, y_data)
+            if self._recommendation.show_fit:
+                param_dict, fit_data = self._recommendation.fit(x_data, y_data)
+                self._plot_widget.add_figure(fit_data[:, 0], fit_data[:, 1])
 
     def save_plot(self, file_path: str) -> None:
         """Save this plot to file as PDF."""

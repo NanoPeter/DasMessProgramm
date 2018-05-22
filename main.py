@@ -229,13 +229,15 @@ class Main(QtWidgets.QMainWindow):
 
         self.__plot_windows = {}
 
-        for title, pair in self._measurement.recommended_plots.items():
+        for recommended_plot in self._measurement.recommended_plots:
+            pair = (recommended_plot.x_label, recommended_plot.y_label)
             if pair not in self.__plot_windows:
                 outputs = self._measurement_class.outputs()
                 x_label = outputs[pair[0]].fullname
                 y_label = outputs[pair[1]].fullname
 
-                window = PlotWindow(title=title, x_label=x_label, y_label=y_label)
+                window = PlotWindow(recommended_plot,
+                                    x_axis_label=x_label, y_axis_label=y_label)
                 self.__plot_windows[pair] = window
                 self.__mdi.addSubWindow(window)
                 window.show()

@@ -1,4 +1,4 @@
-from .measurement import register, AbstractMeasurement, Contacts
+from .measurement import register, AbstractMeasurement, Contacts, PlotRecommendation
 from .measurement import StringValue, FloatValue, IntegerValue, DatetimeValue, AbstractValue, SignalInterface
 
 import numpy as np
@@ -58,7 +58,7 @@ class SMU2Probe(AbstractMeasurement):
 
     @property
     def recommended_plots(self) -> Dict[str, Tuple[str, str]]:
-        return {'Voltage Sweep': ('v', 'i')}
+        return [PlotRecommendation('Voltage Sweep', x_label='v', y_label='i')]
 
     def _measure(self, file_handle) -> None:
         """Custom measurement code lives here.
