@@ -42,14 +42,34 @@ class SignalDataAcquisition(QtCore.QObject, SignalInterface):
         self.status.emit(message)
 
 
+class WrapAroundList(list):
+    """A standard list with wrap-around indexing.
+    
+    Wrap-around indexing only for reading.
+    """
+    
+    def __init__(self, items) -> None:
+        super().__init__(items)
+        
+    def __getitem__(self, key: int):
+        return super().__getitem__(self.wrap_around_index(key))
+        
+    def wrap_around_index(self, index: int) -> int:
+        """Return the regular index for a wrap-around index."""
+        if index >= 0:
+            return index % len(self)
+        else:
+            return len(self) - (-index % len(self))
+
+
 class Main(QtWidgets.QMainWindow):
 
-    CONTACT_NUMBERS = [ 
+    CONTACT_NUMBERS = WrapAroundList([ 
         "05 I-7", "06 I-8", "02 I-2", "04 I-4", "03 I-3", "01 I-1",
         "07 II-1", "09 II-3", "10 II-4", "08 II-2", "12 II-8", "11 II-7", 
         "17 III-7", "18 III-8", "14 III-2", "16 III-4", "15 III-3", "13 III-1",
         "19 IV-1", "21 IV-3", "22 IV-4","20 IV-2", "24 IV-8", "23 IV-7"
-    ]
+    ])
     
     TITLE = 'DasMessProgramm'
 
@@ -137,6 +157,13 @@ class Main(QtWidgets.QMainWindow):
         self.__method_selection_box = QtWidgets.QComboBox()
         self.__method_selection_box.setFixedWidth(200)
         method_layout.addWidget(self.__method_selection_box)
+
+        # Add a non-user-selectable default item:
+        method_model = self.__method_selection_box.model()  # type: QtGui.QStandardItemModel
+        default_method = QtGui.QStandardItem("-- Select a method --")
+        default_method.setEnabled(False)
+        method_model.appendRow(default_method)
+
         available_methods = list(measurement.REGISTRY.keys())  # type: List[str]
         available_methods.sort()
         for method in available_methods:
@@ -176,6 +203,7 @@ class Main(QtWidgets.QMainWindow):
         button_layout.addWidget(self.__next_button)
         self.__next_button.setFixedWidth(100)
         self.__next_button.setEnabled(False)
+        self.__next_button.clicked.connect(self.__increment_contact_number)
 
         self.__statusbar = QtWidgets.QStatusBar()
         self.setStatusBar(self.__statusbar)
@@ -202,6 +230,7 @@ class Main(QtWidgets.QMainWindow):
         self.__sense_contacts_label.setVisible(four_wire_visible)
         self.__contact_input_third.setVisible(four_wire_visible)
         self.__contact_input_fourth.setVisible(four_wire_visible)
+        self.__next_button.setVisible(not four_wire_visible)
 
     def __start__measurement(self):
         contacts = self.__get_contacts()
@@ -235,6 +264,7 @@ class Main(QtWidgets.QMainWindow):
                 outputs = self._measurement_class.outputs()
                 x_label = outputs[pair[0]].fullname
                 y_label = outputs[pair[1]].fullname
+
 
                 window = PlotWindow(recommended_plot,
                                     x_axis_label=x_label, y_axis_label=y_label)
@@ -328,6 +358,14 @@ class Main(QtWidgets.QMainWindow):
     def __measurement_aborted(self):
         self.__show_status('Measurement aborted.')
 
+    @QtCore.pyqtSlot()
+    def __increment_contact_number(self):
+        """Switch to the next contact pair in the list."""
+        for contact in [self.__contact_input_first, self.__contact_input_second]:
+            index = contact.currentIndex()  # type: int
+            index = self.CONTACT_NUMBERS.wrap_around_index(index + 1)
+            contact.setCurrentIndex(index)
+        
     def __show_status(self, message):
         self.__statusbar.showMessage('{} - {}'.format(datetime.now().isoformat(), message))
 
