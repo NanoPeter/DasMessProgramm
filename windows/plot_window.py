@@ -36,7 +36,12 @@ class PlotWidget(FigureCanvas):
     def add_figure(self, x_data: List[float], y_data: List[float]) -> None:
         self._axes.plot(x_data, y_data)
         self.draw()
-    
+
+    def add_text(self, text, x=0.2, y=0.9):
+        self._axes.text(x, y, text, horizontalalignment='center',
+                        verticalalignment = 'center', transform = self._axes.transAxes)
+        self.draw()
+
     def save_figure(self, plot_path: str) -> None:
         """Save plot to 'plot_path' as PDF."""
         self._figure.savefig(plot_path)
@@ -69,7 +74,14 @@ class PlotWindow(QMdiSubWindow):
             self._plot_widget.update_figure(x_data, y_data)
             if self._recommendation.show_fit:
                 param_dict, fit_data = self._recommendation.fit(x_data, y_data)
+                show_text_lines = []
+                for param, value in param_dict.items():
+                    show_text_lines.append('{} = {:0.3e}'.format(param, value))
+
+                show_text = '\n'.join(show_text_lines)
+
                 self._plot_widget.add_figure(fit_data[:, 0], fit_data[:, 1])
+                self._plot_widget.add_text(show_text)
 
     def save_plot(self, file_path: str) -> None:
         """Save this plot to file as PDF."""
