@@ -47,13 +47,13 @@ class WrapAroundList(list):
     
     Wrap-around indexing only for reading.
     """
-    
+
     def __init__(self, items) -> None:
         super().__init__(items)
-        
+
     def __getitem__(self, key: int):
         return super().__getitem__(self.wrap_around_index(key))
-        
+
     def wrap_around_index(self, index: int) -> int:
         """Return the regular index for a wrap-around index."""
         if index >= 0:
@@ -64,13 +64,13 @@ class WrapAroundList(list):
 
 class Main(QtWidgets.QMainWindow):
 
-    CONTACT_NUMBERS = WrapAroundList([ 
+    CONTACT_NUMBERS = WrapAroundList([
         "05 I-7", "06 I-8", "02 I-2", "04 I-4", "03 I-3", "01 I-1",
-        "07 II-1", "09 II-3", "10 II-4", "08 II-2", "12 II-8", "11 II-7", 
+        "07 II-1", "09 II-3", "10 II-4", "08 II-2", "12 II-8", "11 II-7",
         "17 III-7", "18 III-8", "14 III-2", "16 III-4", "15 III-3", "13 III-1",
-        "19 IV-1", "21 IV-3", "22 IV-4","20 IV-2", "24 IV-8", "23 IV-7"
+        "19 IV-1", "21 IV-3", "22 IV-4", "20 IV-2", "24 IV-8", "23 IV-7"
     ])
-    
+
     TITLE = 'DasMessProgramm'
 
     def __init__(self):
@@ -86,7 +86,7 @@ class Main(QtWidgets.QMainWindow):
         self.__directory_name = ""
 
         self._measurement_class = AbstractMeasurement
-        self._measurement = None # type: AbstractMeasurement
+        self._measurement = None  # type: AbstractMeasurement
 
         self.__init_gui()
 
@@ -272,10 +272,13 @@ class Main(QtWidgets.QMainWindow):
                 outputs = self._measurement_class.outputs()
                 x_label = outputs[pair[0]].fullname
                 y_label = outputs[pair[1]].fullname
-
-
-                window = PlotWindow(recommended_plot,
-                                    x_axis_label=x_label, y_axis_label=y_label)
+                
+                window = PlotWindow(
+                    recommended_plot,
+                    "| Contacts: '{}' '{}'".format(self.__contact_input_first.currentText(),
+                                       self.__contact_input_second.currentText()),
+                    x_axis_label=x_label, y_axis_label=y_label
+                )
                 self.__plot_windows[pair] = window
                 self.__mdi.addSubWindow(window)
                 window.show()

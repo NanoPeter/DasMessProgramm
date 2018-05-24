@@ -1,4 +1,6 @@
 from PyQt5.QtWidgets import QMdiSubWindow, QSizePolicy
+from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtCore import Qt
 
 #matplotlib related pyqt5 stuff
 import matplotlib
@@ -7,18 +9,23 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
 from pandas import DataFrame
-from typing import List
+from typing import List, Tuple
+
+from measurement.measurement import PlotRecommendation
 
 
 class PlotWidget(FigureCanvas):
     def __init__(self, recommendation, parent=None, width: int = 5,
-                 height: int = 4, dpi: int = 72, x_axis_label: str='', y_axis_label: str='') -> None:
+                 height: int = 4, dpi: int = 72,
+                 x_axis_label: str = '', y_axis_label: str = '',
+                 title_suffix: str = "") -> None:
         self._figure = Figure(figsize=(width, height), dpi=dpi)
         self._axes = self._figure.add_subplot(111)
 
         self._recommendation = recommendation
         self._x_axis_label = x_axis_label
         self._y_axis_label = y_axis_label
+        self._title_suffix = title_suffix
 
         super().__init__(self._figure)
         self.setParent(parent)
@@ -28,7 +35,7 @@ class PlotWidget(FigureCanvas):
 
     def update_figure(self, x_data: List[float], y_data: List[float]) -> None:
         self._axes.cla()
-        self._axes.set_title(self._recommendation.title)
+        self._axes.set_title("{} {}".format(self._recommendation.title, self._title_suffix))
         self._axes.set_xlabel(self._x_axis_label)
         self._axes.set_ylabel(self._y_axis_label)
         self.add_figure(x_data, y_data)
@@ -37,9 +44,9 @@ class PlotWidget(FigureCanvas):
         self._axes.plot(x_data, y_data)
         self.draw()
 
-    def add_text(self, text, x=0.2, y=0.9):
+    def add_text(self, text: str, x: float = 0.2, y: float = 0.9) -> None:
         self._axes.text(x, y, text, horizontalalignment='center',
-                        verticalalignment = 'center', transform = self._axes.transAxes)
+                        verticalalignment='center', transform=self._axes.transAxes)
         self.draw()
 
     def save_figure(self, plot_path: str) -> None:
@@ -50,17 +57,24 @@ class PlotWidget(FigureCanvas):
 class PlotWindow(QMdiSubWindow):
     """This is a simple sub window to show a plot of data
     """
-    def __init__(self, plot_recommendation,
+    def __init__(self, plot_recommendation: PlotRecommendation, plot_title_suffix: str,
                  x_axis_label: str, y_axis_label: str) -> None:
         super().__init__()
 
         self._recommendation = plot_recommendation
 
-        self.setWindowTitle(plot_recommendation.title)
+        self.setWindowTitle("{}   {}".format(plot_recommendation.title,
+                                               plot_title_suffix))
 
-        self._plot_widget = PlotWidget(plot_recommendation,
-                                       x_axis_label=x_axis_label, y_axis_label=y_axis_label)
+        self._plot_widget = PlotWidget(
+            plot_recommendation,
+            x_axis_label=x_axis_label, y_axis_label=y_axis_label,
+            title_suffix=plot_title_suffix
+        )
         self.setWidget(self._plot_widget)
+        window_icon_pixmap = QPixmap(1, 1)
+        window_icon_pixmap.fill(Qt.transparent)
+        self.setWindowIcon(QIcon(window_icon_pixmap))
 
     def update_data(self, data: DataFrame) -> None:
         """
