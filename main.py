@@ -113,11 +113,19 @@ class Main(QtWidgets.QMainWindow):
             lambda text: self.__file_name_display.setToolTip(text)
         )
         self.__file_name_display.setText(self.__directory_name)
-        self._directory_button = QtWidgets.QPushButton()
-        file_name_layout.addWidget(self._directory_button)
-        self._directory_button.setText("Browse...")
+        directory_buttons_layout = QtWidgets.QHBoxLayout()
+        file_name_layout.addLayout(directory_buttons_layout)
+        self._directory_button = QtWidgets.QPushButton("Select...")
+        directory_buttons_layout.addWidget(self._directory_button)
         self._directory_button.clicked.connect(self.__set_directory_name)
-
+        open_directory_button = QtWidgets.QPushButton("Open...")
+        directory_buttons_layout.addWidget(open_directory_button)
+        open_directory_button.clicked.connect(
+            lambda: QtGui.QDesktopServices.openUrl(
+                QtCore.QUrl.fromUserInput(self.__file_name_display.text())
+            )
+        )
+        
         contacts_layout = QtWidgets.QVBoxLayout()
         self.__inputs_layout.addLayout(contacts_layout)
         contacts_layout.setSpacing(3)
