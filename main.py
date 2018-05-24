@@ -115,12 +115,12 @@ class Main(QtWidgets.QMainWindow):
         self.__file_name_display.setText(self.__directory_name)
         directory_buttons_layout = QtWidgets.QHBoxLayout()
         file_name_layout.addLayout(directory_buttons_layout)
-        self._directory_button = QtWidgets.QPushButton("Select...")
-        directory_buttons_layout.addWidget(self._directory_button)
-        self._directory_button.clicked.connect(self.__set_directory_name)
-        open_directory_button = QtWidgets.QPushButton("Open...")
-        directory_buttons_layout.addWidget(open_directory_button)
-        open_directory_button.clicked.connect(
+        self.__select_directory_button = QtWidgets.QPushButton("Select...")
+        directory_buttons_layout.addWidget(self.__select_directory_button)
+        self.__select_directory_button.clicked.connect(self.__set_directory_name)
+        self.__open_directory_button = QtWidgets.QPushButton("Open...")
+        directory_buttons_layout.addWidget(self.__open_directory_button)
+        self.__open_directory_button.clicked.connect(
             lambda: QtGui.QDesktopServices.openUrl(
                 QtCore.QUrl.fromUserInput(self.__file_name_display.text())
             )
@@ -291,7 +291,8 @@ class Main(QtWidgets.QMainWindow):
         self.__measure_button.setEnabled(enable)
         self.__next_button.setEnabled(enable)
         self.__dynamic_inputs_layout.setEnabled(enable)
-        self._directory_button.setEnabled(enable)
+        self.__select_directory_button.setEnabled(enable)
+        self.__open_directory_button.setEnabled(enable)
         self.__contact_input_first.setEnabled(enable)
         self.__contact_input_second.setEnabled(enable)
         self.__contact_input_third.setEnabled(enable)
