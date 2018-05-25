@@ -114,6 +114,7 @@ class DatetimeValue(AbstractValue):
 class Contacts(Enum):
     """Gives 
     """
+    NONE = 0
     TWO = 2
     FOUR = 4
 
