@@ -73,6 +73,8 @@ class Main(QtWidgets.QMainWindow):
 
     TITLE = 'DasMessProgramm'
 
+    SIDE_BAR_WIDTH = 210
+
     def __init__(self):
         super(Main, self).__init__()
 
@@ -106,7 +108,7 @@ class Main(QtWidgets.QMainWindow):
         file_name_layout.setSpacing(5)
         file_name_layout.addWidget(QtWidgets.QLabel("Save directory:"))
         self.__file_name_display = QtWidgets.QLineEdit()
-        self.__file_name_display.setFixedWidth(200)  # Also sets left panel width
+        self.__file_name_display.setFixedWidth(self.SIDE_BAR_WIDTH)  # Also sets left panel width
         file_name_layout.addWidget(self.__file_name_display)
         self.__file_name_display.setReadOnly(True)
         self.__file_name_display.textChanged.connect(
@@ -163,7 +165,7 @@ class Main(QtWidgets.QMainWindow):
         self.__inputs_layout.addLayout(method_layout)
         method_layout.addWidget(QtWidgets.QLabel("Measurement method:"))
         self.__method_selection_box = QtWidgets.QComboBox()
-        self.__method_selection_box.setFixedWidth(200)
+        self.__method_selection_box.setFixedWidth(self.SIDE_BAR_WIDTH)
         method_layout.addWidget(self.__method_selection_box)
 
         # Add a non-user-selectable default item:
@@ -180,9 +182,9 @@ class Main(QtWidgets.QMainWindow):
             lambda title: self.__measurement_method_selected(title, measurement.REGISTRY[title])
         )
         
-        # TODO: make left hand side scrollable:
-        self.__dynamic_inputs_layout = None  # Initialised on-demand from menu bar
-        self.__inputs_layout.addStretch()
+        self.__dynamic_inputs_area = QtWidgets.QScrollArea()
+        self.__inputs_layout.addWidget(self.__dynamic_inputs_area)
+        self.__dynamic_inputs_layout = None  # Initialised later
 
         right_side_layout = QtWidgets.QVBoxLayout()
         central_layout.addLayout(right_side_layout)
@@ -341,18 +343,17 @@ class Main(QtWidgets.QMainWindow):
         # Remove old dynamic layout, if any:
         if self.__dynamic_inputs_layout is not None:
             delete_children(self.__dynamic_inputs_layout)
-            self.__inputs_layout.removeItem(self.__dynamic_inputs_layout)
             del self.__dynamic_inputs_layout
-        
-        self.__dynamic_inputs_layout = DynamicInputLayout(inputs)
+
+        self.__dynamic_inputs_layout = DynamicInputLayout(inputs, self.SIDE_BAR_WIDTH - 20)
         self.__dynamic_inputs_layout.setSpacing(10)
 
-        # Remove old stretch before adding new one below:
-        old_stretch = self.__inputs_layout.takeAt(self.__inputs_layout.count() - 1)
-        self.__inputs_layout.removeItem(old_stretch)
-        
-        self.__inputs_layout.addLayout(self.__dynamic_inputs_layout, -1)
-        self.__inputs_layout.addStretch()
+        container_widget = QtWidgets.QWidget()
+        container_widget.setLayout(self.__dynamic_inputs_layout)
+
+        old_container = self.__dynamic_inputs_area.widget()
+        del old_container
+        self.__dynamic_inputs_area.setWidget(container_widget)
 
     @QtCore.pyqtSlot()
     def __set_directory_name(self):

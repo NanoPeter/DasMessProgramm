@@ -24,16 +24,16 @@ class DynamicInputLayout(QtWidgets.QVBoxLayout):
                         FloatValue: QtGui.QDoubleValidator,
                         StringValue: None}
     # TODO: Implement BooleanValue and DatetimeValue
-
-    FIXED_WIDTH = 200
     
-    def __init__(self, inputs: Dict[str, AbstractValue]) -> None:
+    def __init__(self, inputs: Dict[str, AbstractValue], width: int = 200) -> None:
         """
         Arguments:
             inputs: A dictionary of inputs as defined in SMU2Probe.inputs
+            width: Width with which to initialise all child widgets
         """
         super().__init__()
 
+        self.__width = width
         self.__dynamic_inputs = dict()  # type: Dict[str, QtWidgets.QLineEdit]
 
         self.__load_widgets(inputs)
@@ -57,7 +57,7 @@ class DynamicInputLayout(QtWidgets.QVBoxLayout):
             element_layout.addWidget(QtWidgets.QLabel(element_name))  # Header text
 
             element_input_field = QtWidgets.QLineEdit()
-            element_input_field.setFixedWidth(self.FIXED_WIDTH)
+            element_input_field.setFixedWidth(self.__width)
             self.__dynamic_inputs[element] = element_input_field
             element_layout.addWidget(element_input_field)
 
