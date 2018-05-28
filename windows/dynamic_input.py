@@ -46,7 +46,9 @@ class DynamicInputLayout(QtWidgets.QVBoxLayout):
         Arguments:
             inputs: A dictionary of inputs as defined in SMU2Probe.inputs
         """
-        for element in list(inputs.keys()):
+        input_keys = list(inputs.keys())
+        input_keys.sort()
+        for element in input_keys:
             element_layout = QtWidgets.QVBoxLayout()
             element_layout.setSpacing(0)
             self.addLayout(element_layout)
