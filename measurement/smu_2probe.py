@@ -3,15 +3,39 @@ from .measurement import StringValue, FloatValue, IntegerValue, DatetimeValue, A
 
 import numpy as np
 from datetime import datetime
+import importlib
 from threading import Event
 import time
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple, List, Optional, Type
 from typing.io import TextIO
 
 from visa import ResourceManager
 import visa
-#TODO: handle automagic Sourcemeter choice and write this info into the measurement file
-from scientificdevices.keithley.sourcemeter2400 import Sourcemeter2400
+
+# Link device ID strings to module paths and class names:
+DEVICE_CLASSES = {
+    "Soucemeter2400": ("scientificdevices.keithley.sourcemeter2400", "Soucemeter2400")
+}  # TODO: Put real ID string into test YAML file and Sourcemeter2400 class
+
+
+def detect_sourcemeter(visa_library: str) -> Optional[Type]:
+    """Detects model number of connected sourcemeter and returns correct device class.
+    
+    ONLY detects and imports ONE sourcemeter with the LOWEST GPIB identifier.
+    """
+    resource_man = ResourceManager(visa_library)
+    for i in range(100):
+        gpib_resource = "GPIB::{}::INSTR".format(i)
+        resource = resource_man.open_resource(gpib_resource)
+        id_string = resource.query("*IDN?")  # type: str
+
+        if id_string in DEVICE_CLASSES.keys():
+            print("DEBUG: Importing sourcemeter with ID", id_string)
+            module = importlib.import_module(DEVICE_CLASSES[id_string][0])
+            cls = getattr(module, DEVICE_CLASSES[id_string][1])
+            return cls
+
+    print("ERROR: No sourcemeter found.")
 
 
 @register('SourceMeter two probe voltage sweep')
@@ -33,9 +57,11 @@ class SMU2Probe(AbstractMeasurement):
         self._nplc = nplc
         self._comment = comment
 
+        SmuClass = detect_sourcemeter(self.VISA_LIBRARY)  # type: Type
+
         resource_man = ResourceManager(self.VISA_LIBRARY)
         resource = resource_man.open_resource(self.GPIB_RESOURCE, query_delay=self.QUERY_DELAY)
-        self._device = Sourcemeter2400(resource)
+        self._device = SmuClass(resource)
         self._device.voltage_driven(0, i, nplc)
 
     @staticmethod
