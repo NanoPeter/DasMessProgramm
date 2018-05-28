@@ -65,10 +65,10 @@ class WrapAroundList(list):
 class Main(QtWidgets.QMainWindow):
 
     CONTACT_NUMBERS = WrapAroundList([
-        "05 I-7", "06 I-8", "02 I-2", "04 I-4", "03 I-3", "01 I-1",
-        "07 II-1", "09 II-3", "10 II-4", "08 II-2", "12 II-8", "11 II-7",
-        "17 III-7", "18 III-8", "14 III-2", "16 III-4", "15 III-3", "13 III-1",
-        "19 IV-1", "21 IV-3", "22 IV-4", "20 IV-2", "24 IV-8", "23 IV-7"
+        "I-7", "I-8", "I-2", "I-4", "I-3", "I-1",
+        "II-1", "II-3", "II-4", "II-2", "II-8", "II-7",
+        "III-7", "III-8", "III-2", "III-4", "III-3", "III-1",
+        "IV-1", "IV-3", "IV-4", "IV-2", "IV-8", "IV-7"
     ])
 
     TITLE = 'DasMessProgramm'
