@@ -230,10 +230,10 @@ class Main(QtWidgets.QMainWindow):
         self.__create_input_ui(cls.inputs())
         self._measurement_class = cls
 
-        if cls.number_of_contacts() == Contacts.TWO:
-            four_wire_visible = False
-        elif cls.number_of_contacts() == Contacts.FOUR:
+        if cls.number_of_contacts() == Contacts.FOUR:
             four_wire_visible = True
+        else:
+            four_wire_visible = False
 
         self.__sense_contacts_label.setVisible(four_wire_visible)
         self.__contact_input_third.setVisible(four_wire_visible)
