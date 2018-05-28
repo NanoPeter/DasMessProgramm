@@ -63,8 +63,8 @@ class PlotWindow(QMdiSubWindow):
 
         self._recommendation = plot_recommendation
 
-        self.setWindowTitle("{}   {}".format(plot_recommendation.title,
-                                               plot_title_suffix))
+        self.setWindowTitle("{} {}".format(plot_recommendation.title,
+                                           plot_title_suffix))
 
         self._plot_widget = PlotWidget(
             plot_recommendation,

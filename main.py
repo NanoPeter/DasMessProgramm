@@ -13,7 +13,7 @@ from datetime import datetime
 
 import measurement
 from measurement.measurement import SignalInterface, Contacts, AbstractMeasurement
-from typing import Dict, List, Union, Tuple
+from typing import Dict, List, Union, Tuple, Type
 
 
 class SignalDataAcquisition(QtCore.QObject, SignalInterface):
@@ -190,6 +190,8 @@ class Main(QtWidgets.QMainWindow):
         central_layout.addLayout(right_side_layout)
         self.__mdi = QtWidgets.QMdiArea()
         right_side_layout.addWidget(self.__mdi)
+        self.__mdi.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.__mdi.customContextMenuRequested.connect(self.__mdi_context_menu)
 
         button_layout = QtWidgets.QHBoxLayout()
         right_side_layout.addLayout(button_layout)
@@ -384,6 +386,23 @@ class Main(QtWidgets.QMainWindow):
 
     def __started(self):
         self.__show_status('Measurement running ...')
+
+    @QtCore.pyqtSlot(QtCore.QPoint)
+    def __mdi_context_menu(self, point: QtCore.QPoint):
+        """Show a context menu on the MDI widget."""
+
+        def close_subwindows(mdi: QtWidgets.QMdiArea, except_type: Type = type(None)):
+            """Close all subwindows of an MDI area, except for objects of 'except_type'."""
+            for subwindow in mdi.subWindowList():
+                if type(subwindow) is not except_type:
+                    subwindow.close()
+                
+        menu = QtWidgets.QMenu()
+        delete_windows_action = QtWidgets.QAction("Delete all plot windows")
+        delete_windows_action.triggered.connect(lambda: close_subwindows(self.__mdi, TableWindow))
+        menu.addAction(delete_windows_action)
+
+        menu.exec(self.__mdi.mapToGlobal(point))
 
 
 if __name__ == '__main__':
