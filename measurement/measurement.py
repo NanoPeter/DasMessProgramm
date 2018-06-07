@@ -43,6 +43,7 @@ def register(name):
         """
         if issubclass(cls, AbstractMeasurement):
             REGISTRY[name] = cls
+            cls.__str__ = lambda self: name
         return cls
     return register_wrapper
 
