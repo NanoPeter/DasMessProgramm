@@ -183,6 +183,7 @@ class Main(QtWidgets.QMainWindow):
         )
         
         self.__dynamic_inputs_area = QtWidgets.QScrollArea()
+        self.__dynamic_inputs_area.setFixedWidth(self.SIDE_BAR_WIDTH)
         self.__inputs_layout.addWidget(self.__dynamic_inputs_area)
         self.__dynamic_inputs_layout = None  # Initialised later
 
