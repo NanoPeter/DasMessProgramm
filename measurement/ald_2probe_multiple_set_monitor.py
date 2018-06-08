@@ -125,6 +125,7 @@ class Ald2ProbeMultipleSETMonitor(AbstractMeasurement):
         for index, smu in enumerate(self._smus):
             sample = self._samples[index]
             file_handle.write('#\n')
+            file_handle.write('# Sample {}\n'.format(index +1))
             file_handle.write('# {}\n'.format(str(smu)))
             file_handle.write('# {}\n'.format(sample['comment']))
             file_handle.write("# applied voltage {} V\n".format(sample['v']))
@@ -160,8 +161,9 @@ class Ald2ProbeMultipleSETMonitor(AbstractMeasurement):
         file_handle.write('{datetime} {data[v1]} {data[i1]} {data[c1]} {data[v2]} {data[i2]} {data[c2]} {data[v3]} {data[i3]} {data[c3]} {data[v4]} {data[i4]} {data[c4]}\n'.format(datetime=datetime_string, data=data))
 
     def __arm_devices(self):
-        for smu in self._smus:
-            smu.set_voltage(self._max_voltage)
+        for index, smu in enumerate(self._smus):
+            voltage = self._samples[index]['v']
+            smu.set_voltage(voltage)
             smu.arm()
 
     def __disarm_devices(self):
