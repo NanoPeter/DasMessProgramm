@@ -4,13 +4,14 @@ from .measurement import FloatValue, IntegerValue, StringValue, DatetimeValue
 from visa import ResourceManager
 from scientificdevices.keithley.sourcemeter2400 import Sourcemeter2400
 from scientificdevices.keithley.sourcemeter2602A import Sourcemeter2602A, SMUChannel
+from scientificdevices.keithley.sourcemeter2636A import Sourcemeter2636A
 
-
-from typing import Tuple, Dict
+from typing import Tuple, Dict, List
 from datetime import datetime
 
+
 @register('ALD 2probe multiple SET monitor')
-class ald_2probe_multiple_set_monitor(AbstractMeasurement):
+class Ald2ProbeMultipleSETMonitor(AbstractMeasurement):
 
     GPIB_RESOURCE_2400_1 = 'GPIB0::10::INSTR'
     GPIB_RESOURCE_2602A = 'GPIB0::12::INSTR'
@@ -18,15 +19,23 @@ class ald_2probe_multiple_set_monitor(AbstractMeasurement):
 
     def __init__(self, signal_interface: SignalInterface,
                  path: str, contacts: Tuple[str, str],
-                 v: float = 0.0, i: float = 1e-6,
-                 nplc: int = 3, comment: str = ''):
+                 sample1_v: float = 0.0, sample1_i: float = 1e-6,
+                 sample1_nplc: int = 3, sample1_comment: str = '',
+                 sample2_v: float = 0.0, sample2_i: float = 1e-6,
+                 sample2_nplc: int = 3, sample2_comment: str = '',
+                 sample3_v: float = 0.0, sample3_i: float = 1e-6,
+                 sample3_nplc: int = 3, sample3_comment: str = '',
+                 sample4_v: float = 0.0, sample4_i: float = 1e-6,
+                 sample4_nplc: int = 3, sample4_comment: str = ''):
 
         super().__init__(signal_interface, path, contacts)
 
-        self._max_voltage = v
-        self._current_limit = i
-        self._nplc = nplc
-        self._comment = comment
+        self._sample1 = {'v': sample1_v, 'i': sample1_i, 'nplc': sample1_nplc, 'comment': sample1_comment}
+        self._sample2 = {'v': sample2_v, 'i': sample2_i, 'nplc': sample2_nplc, 'comment': sample2_comment}
+        self._sample3 = {'v': sample3_v, 'i': sample3_i, 'nplc': sample3_nplc, 'comment': sample3_comment}
+        self._sample4 = {'v': sample4_v, 'i': sample4_i, 'nplc': sample4_nplc, 'comment': sample4_comment}
+
+        self._samples = [self._sample1, self._sample2, self._sample3, self._sample4]
 
         self._init_smus()
 
@@ -38,10 +47,10 @@ class ald_2probe_multiple_set_monitor(AbstractMeasurement):
 
         self._smus = [Sourcemeter2400(dev1),
                       Sourcemeter2400(dev2),
-                      Sourcemeter2602A(dev3, sub_device=SMUChannel.channelA),
-                      Sourcemeter2602A(dev3, sub_device=SMUChannel.channelB)]
+                      Sourcemeter2636A(dev3, sub_device=SMUChannel.channelA),
+                      Sourcemeter2636A(dev3, sub_device=SMUChannel.channelB)]
 
-        for smu in self._smus:
+        for index, smu in enumerate(self._smus):
             smu.voltage_driven(self._max_voltage)
 
     @staticmethod
@@ -50,10 +59,23 @@ class ald_2probe_multiple_set_monitor(AbstractMeasurement):
 
     @staticmethod
     def inputs() -> Dict[str, AbstractValue]:
-        return {'v': FloatValue('Maximum Voltage', default=0.0),
-                'i': FloatValue('Current Limit', default=1e-6),
-                'nplc': IntegerValue('NPLC', default=1),
-                'comment': StringValue('Comment', default='')}
+        return {'sample1_v': FloatValue('(1) Maximum Voltage', default=1e-3),
+                'sample1_i': FloatValue('(1) Current Limit', default=1e-6),
+                'sample1_nplc': IntegerValue('(1) NPLC', default=1),
+                'sample1_comment': StringValue('(1) Comment'),
+                'sample2_v': FloatValue('(2) Maximum Voltage', default=1e-3),
+                'sample2_i': FloatValue('(2) Current Limit', default=1e-6),
+                'sample2_nplc': IntegerValue('(2) NPLC', default=1),
+                'sample2_comment': StringValue('(2) Comment'),
+                'sample3_v': FloatValue('(3) Maximum Voltage', default=1e-3),
+                'sample3_i': FloatValue('(3) Current Limit', default=1e-6),
+                'sample3_nplc': IntegerValue('(3) NPLC', default=1),
+                'sample3_comment': StringValue('(3) Comment'),
+                'sample4_v': FloatValue('(4) Maximum Voltage', default=1e-3),
+                'sample4_i': FloatValue('(4) Current Limit', default=1e-6),
+                'sample4_nplc': IntegerValue('(4) NPLC', default=1),
+                'sample4_comment': StringValue('(4) Comment')
+                }
 
     @staticmethod
     def outputs() -> Dict[str, AbstractValue]:
@@ -72,7 +94,7 @@ class ald_2probe_multiple_set_monitor(AbstractMeasurement):
                 'datetime': DatetimeValue('Timestamp')}
 
     @property
-    def recommended_plots(self) -> Dict[str, Tuple[str, str]]:
+    def recommended_plots(self) -> List[PlotRecommendation]:
         return [PlotRecommendation('Sample1 - Conductance vs. Time',
                                    x_label='datetime', y_label='c1'),
                 PlotRecommendation('Sample2 - Conductance vs. Time',
@@ -97,13 +119,16 @@ class ald_2probe_multiple_set_monitor(AbstractMeasurement):
 
         self.__disarm_devices()
 
-
     def __write_header(self, file_handle):
         file_handle.write("# {0}\n".format(datetime.now().isoformat()))
-        file_handle.write('# {}\n'.format(self._comment))
-        file_handle.write("# maximum voltage {0} V\n".format(self._max_voltage))
-        file_handle.write("# current limit {0} A\n".format(self._current_limit))
-        file_handle.write('# nplc {}\n'.format(self._nplc))
+        for index, smu in enumerate(self._smus):
+            sample = self._sample[index]
+            file_handle.write('#\n')
+            file_handle.write('# {}\n'.format(str(smu)))
+            file_handle.write('# {}\n'.format(sample['comment']))
+            file_handle.write("# applied voltage {} V\n".format(sample['v']))
+            file_handle.write("# current limit {} A\n".format(sample['i']))
+            file_handle.write('# nplc {}\n'.format(sample['nplc']))
         file_handle.write("Datetime Voltage1 Current1 Conductance1 Voltage2 Current2 Conductance2 Voltage3 Current3 Conductance3 Voltage4 Current4 Conductance4\n")
 
     def __get_data(self):
