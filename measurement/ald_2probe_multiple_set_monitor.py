@@ -123,7 +123,7 @@ class Ald2ProbeMultipleSETMonitor(AbstractMeasurement):
     def __write_header(self, file_handle):
         file_handle.write("# {0}\n".format(datetime.now().isoformat()))
         for index, smu in enumerate(self._smus):
-            sample = self._sample[index]
+            sample = self._samples[index]
             file_handle.write('#\n')
             file_handle.write('# {}\n'.format(str(smu)))
             file_handle.write('# {}\n'.format(sample['comment']))
