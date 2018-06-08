@@ -117,17 +117,21 @@ class ald_2probe_multiple_set_monitor(AbstractMeasurement):
 
             all_data[v_string] = data[0]
             all_data[i_string] = data[1]
-            all_data[c_string] = data[1] / data[0]
+            if data[0] != 0:
+                all_data[c_string] = data[1] / data[0]
+            else:
+                all_data[c_string] = float('nan')
 
-        all_data['datetime'] = datetime.now().isoformat()
+        all_data['datetime'] = datetime.now()
 
-        return all_data()
+        return all_data
 
     def __send_data(self, data):
-        self.__signal_interface.emit_data(data)
+        self._signal_interface.emit_data(data)
 
     def __write_data(self, data, file_handle):
-        file_handle.write('{data[datetime]} {data[v1]} {data[i1]} {data[c1]} {data[v2]} {data[i2]} {data[c2]} {data[v3]} {data[i3]} {data[c3]} {data[v4]} {data[i4]} {data[c4]}\n'.format(data=data))
+        datetime_string = data['datetime'].isoformat()
+        file_handle.write('{datetime} {data[v1]} {data[i1]} {data[c1]} {data[v2]} {data[i2]} {data[c2]} {data[v3]} {data[i3]} {data[c3]} {data[v4]} {data[i4]} {data[c4]}\n'.format(datetime=datetime_string, data=data))
 
     def __arm_devices(self):
         for smu in self._smus:
