@@ -51,7 +51,8 @@ class Ald2ProbeMultipleSETMonitor(AbstractMeasurement):
                       Sourcemeter2636A(dev3, sub_device=SMUChannel.channelB)]
 
         for index, smu in enumerate(self._smus):
-            smu.voltage_driven(self._max_voltage)
+            sample = self._samples[index]
+            smu.voltage_driven(sample['v'], current_limit=sample['i'], nplc=sample['nplc'])
 
     @staticmethod
     def number_of_contacts():
