@@ -402,7 +402,7 @@ class Main(QtWidgets.QMainWindow):
                     subwindow.close()
                 
         menu = QtWidgets.QMenu()
-        delete_windows_action = QtWidgets.QAction("Delete all plot windows")
+        delete_windows_action = QtWidgets.QAction("Delete all plot windows", menu)
         delete_windows_action.triggered.connect(lambda: close_subwindows(self.__mdi, TableWindow))
         menu.addAction(delete_windows_action)
 
