@@ -185,7 +185,9 @@ class Main(QtWidgets.QMainWindow):
         )
         
         self.__dynamic_inputs_area = QtWidgets.QScrollArea()
+        self.__dynamic_inputs_area.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.__dynamic_inputs_area.setFixedWidth(self.SIDE_BAR_WIDTH)
+        self.__dynamic_inputs_area.setWidgetResizable(True)
         self.__inputs_layout.addWidget(self.__dynamic_inputs_area)
         self.__dynamic_inputs_layout = None  # Initialised later
 
@@ -283,7 +285,7 @@ class Main(QtWidgets.QMainWindow):
                 window = PlotWindow(
                     recommended_plot,
                     "| Contacts: '{}' '{}'".format(self.__contact_input_first.currentText(),
-                                       self.__contact_input_second.currentText()),
+                                                   self.__contact_input_second.currentText()),
                     x_axis_label=x_label, y_axis_label=y_label
                 )
                 self.__plot_windows[pair] = window
@@ -350,8 +352,7 @@ class Main(QtWidgets.QMainWindow):
             delete_children(self.__dynamic_inputs_layout)
             del self.__dynamic_inputs_layout
 
-        self.__dynamic_inputs_layout = DynamicInputLayout(inputs, self.SIDE_BAR_WIDTH - 20)
-        self.__dynamic_inputs_layout.setSpacing(10)
+        self.__dynamic_inputs_layout = DynamicInputLayout(inputs)
 
         container_widget = QtWidgets.QWidget()
         container_widget.setLayout(self.__dynamic_inputs_layout)
@@ -396,12 +397,44 @@ class Main(QtWidgets.QMainWindow):
 
         def close_subwindows(mdi: QtWidgets.QMdiArea, except_type: Type = type(None)):
             """Close all subwindows of an MDI area, except for objects of 'except_type'."""
+            result_button = QtWidgets.QMessageBox.question(
+                mdi, "Close ALL plot windows?",
+                "Really close ALL plot windows?",
+                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                QtWidgets.QMessageBox.Yes
+            )
+            if result_button != QtWidgets.QMessageBox.Yes:
+                return
+            
             for subwindow in mdi.subWindowList():
                 if type(subwindow) is not except_type:
                     subwindow.close()
-                
+
+        def tile_subwindows(mdi: QtWidgets.QMdiArea, except_type: Type = type(None)):
+            """Tile all subwindows of an MDI area, except for objects of 'except_type'."""
+            # Hide windows to keep them from being tiled:
+            windows_hidden = list()  # type: List[QtWidgets.QMdiSubWindow]
+            for window in mdi.subWindowList():
+                if type(window) == except_type:
+                    windows_hidden.append(window)
+                    window.hide()
+
+            mdi.tileSubWindows()
+
+            # Show hidden windows again:
+            for window in windows_hidden:
+                window.show()
+
+            # Move all tiled windows above the excluded ones:
+            for window in mdi.subWindowList():
+                if window not in windows_hidden:
+                    mdi.setActiveSubWindow(window)
+            
         menu = QtWidgets.QMenu()
-        delete_windows_action = QtWidgets.QAction("Delete all plot windows")
+        arrange_windows_action = QtWidgets.QAction("Arrange plot windows in tiles", menu)
+        arrange_windows_action.triggered.connect(lambda: tile_subwindows(self.__mdi, TableWindow))
+        menu.addAction(arrange_windows_action)
+        delete_windows_action = QtWidgets.QAction("Delete all plot windows", menu)
         delete_windows_action.triggered.connect(lambda: close_subwindows(self.__mdi, TableWindow))
         menu.addAction(delete_windows_action)
 

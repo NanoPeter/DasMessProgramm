@@ -1,8 +1,9 @@
-from PyQt5 import QtCore, QtWidgets, QtGui
+from PyQt5 import QtWidgets, QtGui
 from measurement.measurement import FloatValue, IntegerValue, StringValue, AbstractValue
 
 from typing import Dict, Union
 from datetime import datetime
+
 
 def delete_children(layout: QtWidgets.QLayout) -> None:
     """Delete all child layouts and widgets of a layout.
@@ -25,20 +26,22 @@ class DynamicInputLayout(QtWidgets.QVBoxLayout):
                         StringValue: None}
     # TODO: Implement BooleanValue and DatetimeValue
     
-    def __init__(self, inputs: Dict[str, AbstractValue], width: int = 200) -> None:
+    def __init__(self, inputs: Dict[str, AbstractValue]) -> None:
         """
         Arguments:
             inputs: A dictionary of inputs as defined in SMU2Probe.inputs
-            width: Width with which to initialise all child widgets
         """
         super().__init__()
 
-        self.__width = width
         self.__dynamic_inputs = dict()  # type: Dict[str, QtWidgets.QLineEdit]
 
         self.__load_widgets(inputs)
+        self.addStretch()
 
         self.__inputs = inputs
+
+        self.setSpacing(10)
+        self.setContentsMargins(0, 0, 0, 0)
 
     def __load_widgets(self, inputs: Dict[str, AbstractValue]) -> None:
         """Load widgets into this layout dynamically.
@@ -57,7 +60,6 @@ class DynamicInputLayout(QtWidgets.QVBoxLayout):
             element_layout.addWidget(QtWidgets.QLabel(element_name))  # Header text
 
             element_input_field = QtWidgets.QLineEdit()
-            element_input_field.setFixedWidth(self.__width)
             self.__dynamic_inputs[element] = element_input_field
             element_layout.addWidget(element_input_field)
 
@@ -82,3 +84,4 @@ class DynamicInputLayout(QtWidgets.QVBoxLayout):
             input_values[name] = input.convert_from_string(dynamic_input.text())
 
         return input_values
+
