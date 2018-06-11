@@ -185,7 +185,9 @@ class Main(QtWidgets.QMainWindow):
         )
         
         self.__dynamic_inputs_area = QtWidgets.QScrollArea()
+        self.__dynamic_inputs_area.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.__dynamic_inputs_area.setFixedWidth(self.SIDE_BAR_WIDTH)
+        self.__dynamic_inputs_area.setWidgetResizable(True)
         self.__inputs_layout.addWidget(self.__dynamic_inputs_area)
         self.__dynamic_inputs_layout = None  # Initialised later
 
@@ -283,7 +285,7 @@ class Main(QtWidgets.QMainWindow):
                 window = PlotWindow(
                     recommended_plot,
                     "| Contacts: '{}' '{}'".format(self.__contact_input_first.currentText(),
-                                       self.__contact_input_second.currentText()),
+                                                   self.__contact_input_second.currentText()),
                     x_axis_label=x_label, y_axis_label=y_label
                 )
                 self.__plot_windows[pair] = window
@@ -350,8 +352,7 @@ class Main(QtWidgets.QMainWindow):
             delete_children(self.__dynamic_inputs_layout)
             del self.__dynamic_inputs_layout
 
-        self.__dynamic_inputs_layout = DynamicInputLayout(inputs, self.SIDE_BAR_WIDTH - 20)
-        self.__dynamic_inputs_layout.setSpacing(10)
+        self.__dynamic_inputs_layout = DynamicInputLayout(inputs)
 
         container_widget = QtWidgets.QWidget()
         container_widget.setLayout(self.__dynamic_inputs_layout)
