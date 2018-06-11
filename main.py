@@ -410,9 +410,29 @@ class Main(QtWidgets.QMainWindow):
                 if type(subwindow) is not except_type:
                     subwindow.close()
 
+        def tile_subwindows(mdi: QtWidgets.QMdiArea, except_type: Type = type(None)):
+            """Tile all subwindows of an MDI area, except for objects of 'except_type'."""
+            # Hide windows to keep them from being tiled:
+            windows_hidden = list()  # type: List[QtWidgets.QMdiSubWindow]
+            for window in mdi.subWindowList():
+                if type(window) == except_type:
+                    windows_hidden.append(window)
+                    window.hide()
+
+            mdi.tileSubWindows()
+
+            # Show hidden windows again:
+            for window in windows_hidden:
+                window.show()
+
+            # Move all tiled windows above the excluded ones:
+            for window in mdi.subWindowList():
+                if window not in windows_hidden:
+                    mdi.setActiveSubWindow(window)
+            
         menu = QtWidgets.QMenu()
-        arrange_windows_action = QtWidgets.QAction("Tile windows", menu)
-        arrange_windows_action.triggered.connect(lambda: self.__mdi.tileSubWindows())
+        arrange_windows_action = QtWidgets.QAction("Arrange plot windows in tiles", menu)
+        arrange_windows_action.triggered.connect(lambda: tile_subwindows(self.__mdi, TableWindow))
         menu.addAction(arrange_windows_action)
         delete_windows_action = QtWidgets.QAction("Delete all plot windows", menu)
         delete_windows_action.triggered.connect(lambda: close_subwindows(self.__mdi, TableWindow))
