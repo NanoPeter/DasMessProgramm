@@ -397,11 +397,23 @@ class Main(QtWidgets.QMainWindow):
 
         def close_subwindows(mdi: QtWidgets.QMdiArea, except_type: Type = type(None)):
             """Close all subwindows of an MDI area, except for objects of 'except_type'."""
+            result_button = QtWidgets.QMessageBox.question(
+                mdi, "Close ALL plot windows?",
+                "Really close ALL plot windows?",
+                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                QtWidgets.QMessageBox.Yes
+            )
+            if result_button != QtWidgets.QMessageBox.Yes:
+                return
+            
             for subwindow in mdi.subWindowList():
                 if type(subwindow) is not except_type:
                     subwindow.close()
-                
+
         menu = QtWidgets.QMenu()
+        arrange_windows_action = QtWidgets.QAction("Tile windows", menu)
+        arrange_windows_action.triggered.connect(lambda: self.__mdi.tileSubWindows())
+        menu.addAction(arrange_windows_action)
         delete_windows_action = QtWidgets.QAction("Delete all plot windows", menu)
         delete_windows_action.triggered.connect(lambda: close_subwindows(self.__mdi, TableWindow))
         menu.addAction(delete_windows_action)
