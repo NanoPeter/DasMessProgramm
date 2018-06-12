@@ -13,13 +13,14 @@ import visa
 
 from scientificdevices.keithley.sourcemeter2602A import SMUChannel
 from scientificdevices.keithley.sourcemeter2636A import Sourcemeter2636A
-
+from scientificdevices.lakeshore.model340 import Model340, Sensor
 
 @register('SET voltage sweep')
 class SETSGD(AbstractMeasurement):
     """Voltage driven 2-probe current measurement on a sourcemeter."""
 
     GPIB_RESOURCE = "GPIB::10::INSTR"
+    TEMP_ADDR = 12
     VISA_LIBRARY = "@py"
     QUERY_DELAY = 0.0
 
@@ -45,6 +46,8 @@ class SETSGD(AbstractMeasurement):
         
         self._gate = Sourcemeter2636A(resource, sub_device=SMUChannel.channelB)
         self._gate.voltage_driven(0, i, nplc, range=gd_current_range)
+        
+        self._temperature_controller = Model340(self.TEMP_ADDR)
 
     @staticmethod
     def number_of_contacts():
@@ -90,11 +93,15 @@ class SETSGD(AbstractMeasurement):
 
             self._device.set_voltage(voltage)
             (voltage, current), (gate_voltage, gate_current) = self.__measure_data_point()
-            temperature = self._get_temperature()
-            file_handle.write("{} {} {} {} {} {}\n".format(datetime.now().isoformat(),
+            
+            temperature_a, temperature_b, temperature_c = self._get_temperatures()
+            
+            file_handle.write("{} {} {} {} {} {} {} {}\n".format(datetime.now().isoformat(),
                                                            voltage, current,
                                                            gate_voltage, gate_current,
-                                                           temperature))
+                                                           temperature_a,
+                                                           temperature_b,
+                                                           temperature_c))
             file_handle.flush()
             # Send data point to UI for plotting:
             self._signal_interface.emit_data({'v': voltage, 'i': current,
@@ -128,7 +135,7 @@ class SETSGD(AbstractMeasurement):
         file_handle.write("# current limit {0} A\n".format(self._current_limit))
         file_handle.write("# gate voltage {0} V\n".format(self._gate_voltage))
         file_handle.write('# nplc {}\n'.format(self._nplc))
-        file_handle.write("Datetime Voltage Current GateVoltage GateCurrent Temperature\n")
+        file_handle.write("Datetime Voltage Current GateVoltage GateCurrent TemperatureA TemperatureB TemperatureC\n")
 
     def __measure_data_point(self) -> Tuple[Tuple[float, float], Tuple[float, float]]:
         """Return one data point: (voltage, current).
@@ -139,6 +146,8 @@ class SETSGD(AbstractMeasurement):
         data_GD = self._gate.read()
         return data_SD, data_GD
         
-    def _get_temperature(self):
-        print('WARNING: temperature measurement not implemented')
-        return 0
+    def _get_temperatures(self):
+        t_a = self._temperature_controller.get_temperature(Sensor.A)
+        t_b = self._temperature_controller.get_temperature(Sensor.B)
+        t_c = self._temperature_controller.get_temperature(Sensor.C) 
+        return t_a, t_b, t_c

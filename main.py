@@ -17,6 +17,8 @@ import measurement
 from measurement.measurement import SignalInterface, Contacts, AbstractMeasurement
 from typing import Dict, List, Union, Tuple, Type
 
+from configparser import ConfigParser
+
 
 class SignalDataAcquisition(QtCore.QObject, SignalInterface):
     finished = QtCore.pyqtSignal(object)
@@ -80,6 +82,9 @@ class Main(QtWidgets.QMainWindow):
     def __init__(self):
         super(Main, self).__init__()
 
+        self._config = ConfigParser()
+        self._config.read('settings.cfg')
+
         self.__signal_interface = SignalDataAcquisition()
         self.__signal_interface.finished.connect(self.__finished)
         self.__signal_interface.data.connect(self.__new_data)
@@ -87,7 +92,13 @@ class Main(QtWidgets.QMainWindow):
         self.__signal_interface.status.connect(self.__show_status)
         self.__signal_interface.started.connect(self.__started)
 
-        self.__directory_name = ""
+        if 'general' in self._config:
+            if 'last_folder' in self._config['general']:
+                self.__directory_name = self._config['general']['last_folder']
+            else:
+                self.__directory_name = '/tmp'
+        else:
+            self.__directory_name = '/tmp'
 
         self._measurement_class = AbstractMeasurement
         self._measurement = None  # type: AbstractMeasurement
@@ -364,8 +375,12 @@ class Main(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot()
     def __set_directory_name(self):
         """Open a dialogue to change the output directory."""
-        self.__directory_name = QtWidgets.QFileDialog.getExistingDirectory()
-        self.__file_name_display.setText(self.__directory_name)
+        dir_name = QtWidgets.QFileDialog.getExistingDirectory(self, 'Open Measurement Directory', self.__directory_name)
+        
+        if dir_name != '':
+            self.__directory_name = dir_name
+            self.__file_name_display.setText(self.__directory_name)
+            self._update_config()
 
     def __new_data(self, data_dict):
         self.__df = self.__df.append(data_dict, ignore_index=True)
@@ -439,6 +454,15 @@ class Main(QtWidgets.QMainWindow):
         menu.addAction(delete_windows_action)
 
         menu.exec(self.__mdi.mapToGlobal(point))
+
+    def _update_config(self):
+        print('updating config')
+        if 'general' in self._config:
+            self._config['general']['last_folder'] = self.__directory_name
+            print(self._config['general']['last_folder'])
+            
+        with open('settings.cfg', 'w') as file_handle:
+            self._config.write(file_handle)
 
 
 if __name__ == '__main__':
