@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets, QtGui
-from measurement.measurement import FloatValue, IntegerValue, StringValue, AbstractValue
+from measurement.measurement import FloatValue, IntegerValue, StringValue, AbstractValue, BooleanValue
 
 from typing import Dict, Union
 from datetime import datetime
@@ -57,20 +57,25 @@ class DynamicInputLayout(QtWidgets.QVBoxLayout):
             self.addLayout(element_layout)
 
             element_name = inputs[element].fullname
-            element_layout.addWidget(QtWidgets.QLabel(element_name))  # Header text
 
-            element_input_field = QtWidgets.QLineEdit()
-            self.__dynamic_inputs[element] = element_input_field
-            element_layout.addWidget(element_input_field)
+            if type(inputs[element]) == BooleanValue:
+                element_check_box = QtWidgets.QCheckBox(element_name)
+                self.__dynamic_inputs[element] = element_check_box
+                element_layout.addWidget(element_check_box)
+            else:
+                element_layout.addWidget(QtWidgets.QLabel(element_name))  # Header text
+                element_input_field = QtWidgets.QLineEdit()
+                self.__dynamic_inputs[element] = element_input_field
+                element_layout.addWidget(element_input_field)
 
-            # Validate the input field if it is numerical:
-            element_type = type(inputs[element])
-            element_input_validator = self.input_validators[element_type]
-            if element_input_validator is not None:
-                element_input_field.setValidator(element_input_validator())
+                # Validate the input field if it is numerical:
+                element_type = type(inputs[element])
+                element_input_validator = self.input_validators[element_type]
+                if element_input_validator is not None:
+                    element_input_field.setValidator(element_input_validator())
 
-            element_default = inputs[element].default
-            element_input_field.setText(str(element_default))
+                element_default = inputs[element].default
+                element_input_field.setText(str(element_default))
 
     def get_inputs(self) -> Dict[str, Union[int, float, bool, str, datetime]]:
         """Return a dictionary of input names with their user-set values.
@@ -81,7 +86,10 @@ class DynamicInputLayout(QtWidgets.QVBoxLayout):
 
         for name, dynamic_input in self.__dynamic_inputs.items():
             input = self.__inputs[name]  # type: AbstractValue
-            input_values[name] = input.convert_from_string(dynamic_input.text())
+            if type(input) == BooleanValue:
+                input_values[name] = dynamic_input.isChecked()
+            else:
+                input_values[name] = input.convert_from_string(dynamic_input.text())
 
         return input_values
 

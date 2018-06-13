@@ -1,5 +1,5 @@
 from .measurement import register, AbstractMeasurement, Contacts, PlotRecommendation
-from .measurement import StringValue, FloatValue, IntegerValue, DatetimeValue, AbstractValue, SignalInterface, BooleanValue
+from .measurement import StringValue, FloatValue, IntegerValue, DatetimeValue, AbstractValue, SignalInterface
 
 import numpy as np
 from datetime import datetime
@@ -15,7 +15,7 @@ from scientificdevices.keithley.sourcemeter2602A import SMUChannel
 from scientificdevices.keithley.sourcemeter2636A import Sourcemeter2636A
 from scientificdevices.lakeshore.model340 import Model340, Sensor
 
-@register('SET voltage sweep')
+@register('SET Gate Sweep')
 class SETSGD(AbstractMeasurement):
     """Voltage driven 2-probe current measurement on a sourcemeter."""
 
@@ -29,8 +29,7 @@ class SETSGD(AbstractMeasurement):
                  v: float = 0.0, i: float = 1e-6, n: int = 100,
                  nplc: int = 1, comment: str = '', gate_voltage: float=0.0,
                  sd_current_range: float = 0.0, 
-                 gd_current_range: float = 0.0,
-                 symmetric: bool = False) -> None:
+                 gd_current_range: float = 0.0) -> None:
         super().__init__(signal_interface, path, contacts)
         self._max_voltage = v
         self._current_limit = i
@@ -38,8 +37,6 @@ class SETSGD(AbstractMeasurement):
         self._nplc = nplc
         self._comment = comment
         self._gate_voltage = gate_voltage
-        
-        print('DEBUG: current limit is ',self._current_limit, i)
 
         resource_man = ResourceManager(self.VISA_LIBRARY)
         resource = resource_man.open_resource(self.GPIB_RESOURCE, query_delay=self.QUERY_DELAY)
@@ -51,8 +48,6 @@ class SETSGD(AbstractMeasurement):
         self._gate.voltage_driven(0, i, nplc, range=gd_current_range)
         
         self._temperature_controller = Model340(self.TEMP_ADDR)
-        
-        self._symmetric = symmetric
 
     @staticmethod
     def number_of_contacts():
@@ -60,15 +55,14 @@ class SETSGD(AbstractMeasurement):
 
     @staticmethod
     def inputs() -> Dict[str, AbstractValue]:
-        return {'v': FloatValue('Maximum Voltage', default=0.0),
+        return {'v': FloatValue('SD Voltage', default=0.0),
                 'i': FloatValue('Current Limit', default=1e-6),
                 'n': IntegerValue('Number of Points', default=100),
                 'nplc': IntegerValue('NPLC', default=1),
                 'comment': StringValue('Comment', default=''),
-                'gate_voltage': FloatValue('Gate Voltage', default=0.0),
+                'gate_voltage': FloatValue('max. Gate Voltage', default=0.0),
                 'sd_current_range': FloatValue('SD min. I-range', default=1e-8),
-                'gd_current_range': FloatValue('GD min. I-range', default=1e-8), 
-                'symmetric': BooleanValue('Symmetric', default=False)              
+                'gd_current_range': FloatValue('GD min. I-range', default=1e-8),               
                 }
 
     @staticmethod
@@ -81,8 +75,8 @@ class SETSGD(AbstractMeasurement):
 
     @property
     def recommended_plots(self) -> List[PlotRecommendation]:
-        return [PlotRecommendation('Voltage Sweep', x_label='v', y_label='i', show_fit=False),
-                PlotRecommendation('Gate Current', x_label='v', y_label='gate_current', show_fit=False)]
+        return [PlotRecommendation('Gate Voltage Sweep', x_label='gate_voltage', y_label='i', show_fit=False),
+                PlotRecommendation('Gate Current', x_label='gate_voltage', y_label='gate_current', show_fit=False)]
 
     def _measure(self, file_handle) -> None:
         """Custom measurement code lives here.
@@ -90,19 +84,14 @@ class SETSGD(AbstractMeasurement):
         self.__write_header(file_handle)
         self.__initialize_device()
         time.sleep(0.5)
-        
-        if self._symmetric:
-            voltages = np.linspace(-self._max_voltage, self._max_voltage, self._number_of_points)
-        else:
-            voltages = np.linspace(0, self._max_voltage, self._number_of_points)
 
-        for voltage in voltages:
+        for voltage in np.linspace(0, self._gate_voltage, self._number_of_points):
             if self._should_stop.is_set():
                 print("DEBUG: Aborting measurement.")
                 self._signal_interface.emit_aborted()
                 break
 
-            self._device.set_voltage(voltage)
+            self._gate.set_voltage(voltage)
             (voltage, current), (gate_voltage, gate_current) = self.__measure_data_point()
             
             temperature_a, temperature_b, temperature_c = self._get_temperatures()
@@ -124,7 +113,7 @@ class SETSGD(AbstractMeasurement):
     def __initialize_device(self) -> None:
         """Make device ready for measurement."""
         self._device.arm()
-        self._gate.set_voltage(self._gate_voltage)
+        self._device.set_voltage(self._max_voltage)
         self._gate.arm()
 
     def __deinitialize_device(self) -> None:
@@ -142,9 +131,9 @@ class SETSGD(AbstractMeasurement):
         """
         file_handle.write("# {0}\n".format(datetime.now().isoformat()))
         file_handle.write('# {}\n'.format(self._comment))
-        file_handle.write("# maximum voltage {0} V\n".format(self._max_voltage))
+        file_handle.write("# SD voltage {0} V\n".format(self._max_voltage))
         file_handle.write("# current limit {0} A\n".format(self._current_limit))
-        file_handle.write("# gate voltage {0} V\n".format(self._gate_voltage))
+        file_handle.write("# max. gate voltage {0} V\n".format(self._gate_voltage))
         file_handle.write('# nplc {}\n'.format(self._nplc))
         file_handle.write("Datetime Voltage Current GateVoltage GateCurrent TemperatureA TemperatureB TemperatureC\n")
 
