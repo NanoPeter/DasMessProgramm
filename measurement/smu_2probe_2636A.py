@@ -111,26 +111,3 @@ class SMU2Probe(AbstractMeasurement):
         Device must be initialised and armed.
         """
         return self._device.read()
-
-
-@register("SIMULATED SourceMeter two probe voltage sweep")
-class SMU2ProbeSimulation(SMU2Probe):
-    """PyVisa-sim compatible adaptation of SMU2Probe for testing."""
-
-    VISA_LIBRARY = "measurement/test_devices.yaml@sim"
-    QUERY_DELAY = 0.1
-
-    def __init__(self, signal_interface: SignalInterface,
-                 path: str, contacts: Tuple[str, str],
-                 v: float = 0.0, i: float = 1e-6, n: int = 100,
-                 nplc: int = 1, comment: str = '') -> None:
-        super().__init__(signal_interface, path, contacts,
-                         v, i, n, nplc, comment)
-
-        # Set some things that are needed to get pyvisa-sim running:
-        self._device._dev.write_termination = "\n"
-        self._device._dev.read_termination = "\n"
-        self._device._dev.set_visa_attribute(
-            visa.constants.VI_ATTR_TERMCHAR_EN,
-            visa.constants.VI_TRUE
-        )
