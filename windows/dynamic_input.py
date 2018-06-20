@@ -1,9 +1,10 @@
 from PyQt5 import QtWidgets, QtGui
-from measurement.measurement import FloatValue, IntegerValue, StringValue, AbstractValue, BooleanValue
+from measurement.measurement import FloatValue, IntegerValue, StringValue, AbstractValue, BooleanValue, GPIBPathValue
 
 from typing import Dict, Union
 from datetime import datetime
 
+from .gpib_picker import GPIBPicker
 
 def delete_children(layout: QtWidgets.QLayout) -> None:
     """Delete all child layouts and widgets of a layout.
@@ -62,6 +63,11 @@ class DynamicInputLayout(QtWidgets.QVBoxLayout):
                 element_check_box = QtWidgets.QCheckBox(element_name)
                 self.__dynamic_inputs[element] = element_check_box
                 element_layout.addWidget(element_check_box)
+            elif type(inputs[element]) == GPIBPathValue:
+                element_gpib = GPIBPicker()
+                self.__dynamic_inputs[element] = element_gpib
+                element_layout.addWidget(element_gpib)
+                element_gpib.select_device(inputs[element].default)
             else:
                 element_layout.addWidget(QtWidgets.QLabel(element_name))  # Header text
                 element_input_field = QtWidgets.QLineEdit()

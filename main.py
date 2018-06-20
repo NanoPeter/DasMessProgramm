@@ -19,6 +19,8 @@ from typing import Dict, List, Union, Tuple, Type
 
 from configparser import ConfigParser
 
+from windows.gpib_picker import GPIBPicker
+
 
 class SignalDataAcquisition(QtCore.QObject, SignalInterface):
     finished = QtCore.pyqtSignal(object)

@@ -105,6 +105,10 @@ class StringValue(AbstractValue):
         return str(value)
 
 
+class GPIBPathValue(StringValue):
+    pass
+
+
 class DatetimeValue(AbstractValue):
     def __init__(self, fullname: str) -> None:
         super().__init__(fullname, datetime.now())
