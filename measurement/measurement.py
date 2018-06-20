@@ -18,6 +18,7 @@ from os.path import join as join_path
 import numpy as np
 
 from typing import List
+from overview import Overview
 
 REGISTRY = {}
 
@@ -280,4 +281,9 @@ class AbstractMeasurement(ABC):
     @abstractmethod
     def _measure(self, file_handle) -> None:
         pass
+
+    def _write_overview(self, comment_lines: List[str] = [],  **data) -> None:
+        print("DEBUG: write_overview called")
+        overview_file = Overview(self._path, self.__class__.__name__, list(data.keys()), comment_lines)
+        overview_file.add_measurement(**data)
 

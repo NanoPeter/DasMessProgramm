@@ -66,6 +66,7 @@ class SMU2Probe(AbstractMeasurement):
         self.__write_header(file_handle)
         self.__initialize_device()
         time.sleep(0.5)
+        voltages, currents = [], []
 
         for voltage in np.linspace(0, self._max_voltage, self._number_of_points):
             if self._should_stop.is_set():
@@ -75,12 +76,17 @@ class SMU2Probe(AbstractMeasurement):
 
             self._device.set_voltage(voltage)
             voltage, current = self.__measure_data_point()
+            voltages.append(voltage)
+            currents.append(current)
             file_handle.write("{} {}\n".format(voltage, current))
             file_handle.flush()
             # Send data point to UI for plotting:
             self._signal_interface.emit_data({'v': voltage, 'i': current, 'datetime': datetime.now()})
 
         self.__deinitialize_device()
+        
+        resistance, _ = np.polyfit(currents, voltages, 1)
+        self._write_overview(Resistance=resistance, Datetime=datetime.now().isoformat())
 
     def __initialize_device(self) -> None:
         """Make device ready for measurement."""
