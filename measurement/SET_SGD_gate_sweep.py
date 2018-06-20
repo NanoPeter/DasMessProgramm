@@ -1,5 +1,5 @@
 from .measurement import register, AbstractMeasurement, Contacts, PlotRecommendation
-from .measurement import StringValue, FloatValue, IntegerValue, DatetimeValue, AbstractValue, SignalInterface
+from .measurement import StringValue, FloatValue, IntegerValue, DatetimeValue, AbstractValue, SignalInterface, BooleanValue
 
 import numpy as np
 from datetime import datetime
@@ -29,7 +29,8 @@ class SETSGD(AbstractMeasurement):
                  v: float = 0.0, i: float = 1e-6, n: int = 100,
                  nplc: int = 1, comment: str = '', gate_voltage: float=0.0,
                  sd_current_range: float = 0.0, 
-                 gd_current_range: float = 0.0) -> None:
+                 gd_current_range: float = 0.0,
+                 symmetric: bool = False) -> None:
         super().__init__(signal_interface, path, contacts)
         self._max_voltage = v
         self._current_limit = i
@@ -48,7 +49,9 @@ class SETSGD(AbstractMeasurement):
         self._gate.voltage_driven(0, i, nplc, range=gd_current_range)
         
         self._temperature_controller = Model340(self.TEMP_ADDR)
-
+        
+        self._symmetric = symmetric
+        
     @staticmethod
     def number_of_contacts():
         return Contacts.THREE
@@ -62,7 +65,8 @@ class SETSGD(AbstractMeasurement):
                 'comment': StringValue('Comment', default=''),
                 'gate_voltage': FloatValue('max. Gate Voltage', default=0.0),
                 'sd_current_range': FloatValue('SD min. I-range', default=1e-8),
-                'gd_current_range': FloatValue('GD min. I-range', default=1e-8),               
+                'gd_current_range': FloatValue('GD min. I-range', default=1e-8), 
+                'symmetric': BooleanValue('Symmetric', default=False)                
                 }
 
     @staticmethod
@@ -85,7 +89,12 @@ class SETSGD(AbstractMeasurement):
         self.__initialize_device()
         time.sleep(0.5)
 
-        for voltage in np.linspace(0, self._gate_voltage, self._number_of_points):
+        if self._symmetric:
+            voltages = np.linspace(-self._gate_voltage, self._gate_voltage, self._number_of_points)
+        else:
+            voltages = np.linspace(0, self._gate_voltage, self._number_of_points)
+
+        for voltage in voltages:
             if self._should_stop.is_set():
                 print("DEBUG: Aborting measurement.")
                 self._signal_interface.emit_aborted()
