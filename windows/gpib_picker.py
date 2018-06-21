@@ -49,6 +49,8 @@ class GPIBPicker(QWidget):
         for item in self._resources:
             self._combobox.addItem(item)
 
+        rm.close()
+
     def select_device(self, address):
         if address in self._resources:
             index = self._resources.index(address)
