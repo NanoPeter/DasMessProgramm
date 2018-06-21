@@ -26,7 +26,7 @@ class SMU2Probe(AbstractMeasurement):
     def __init__(self, signal_interface: SignalInterface,
                  path: str, contacts: Tuple[str, str],
                  v: float = 0.0, i: float = 1e-6, n: int = 100,
-                 nplc: int = 1, comment: str = '', gpib:str='') -> None:
+                 nplc: int = 1, comment: str = '', gpib: str = '') -> None:
         super().__init__(signal_interface, path, contacts)
         self._max_voltage = v
         self._current_limit = i
@@ -37,9 +37,13 @@ class SMU2Probe(AbstractMeasurement):
         resource_man = ResourceManager(self.VISA_LIBRARY)
         resource = resource_man.open_resource(gpib, query_delay=self.QUERY_DELAY)
 
-        self._device = SMU2Probe._get_sourcemeter(resource)
-        self._device.voltage_driven(0, i, nplc)
+        try:
+            self._device = SMU2Probe._get_sourcemeter(resource)
+        except visa.VisaIOError:
+            # Should only occur when pyvisa-sim is used:
+            self._device = Sourcemeter2400(resource)
 
+        self._device.voltage_driven(0, i, nplc)
 
     @staticmethod
     def _get_sourcemeter(resource):
@@ -52,7 +56,6 @@ class SMU2Probe(AbstractMeasurement):
             return Sourcemeter2636A(resource)
         else:
             raise ValueError('Sourcemeter "{}" not known.'.format(identification))
-
 
     @staticmethod
     def number_of_contacts():
@@ -146,9 +149,9 @@ class SMU2ProbeSimulation(SMU2Probe):
     def __init__(self, signal_interface: SignalInterface,
                  path: str, contacts: Tuple[str, str],
                  v: float = 0.0, i: float = 1e-6, n: int = 100,
-                 nplc: int = 1, comment: str = '') -> None:
+                 nplc: int = 1, comment: str = '', gpib: str = '') -> None:
         super().__init__(signal_interface, path, contacts,
-                         v, i, n, nplc, comment)
+                         v, i, n, nplc, comment, gpib="GPIB::10::INSTR")
 
         # Set some things that are needed to get pyvisa-sim running:
         self._device._dev.write_termination = "\n"
