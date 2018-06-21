@@ -103,7 +103,8 @@ class SMU2Probe(AbstractMeasurement):
         self.__deinitialize_device()
         
         resistance, _ = np.polyfit(currents, voltages, 1)
-        self._write_overview(Resistance=resistance, Datetime=datetime.now().isoformat())
+        self._write_overview(Resistance=resistance, Datetime=datetime.now().isoformat(),
+                             Aborted=self._should_stop.is_set())
 
     def __initialize_device(self) -> None:
         """Make device ready for measurement."""
