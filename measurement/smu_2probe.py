@@ -1,5 +1,5 @@
 from .measurement import register, AbstractMeasurement, Contacts, PlotRecommendation
-from .measurement import StringValue, FloatValue, IntegerValue, DatetimeValue, AbstractValue, SignalInterface
+from .measurement import StringValue, FloatValue, IntegerValue, DatetimeValue, AbstractValue, SignalInterface, GPIBPathValue
 
 import numpy as np
 from datetime import datetime
@@ -12,20 +12,21 @@ from visa import ResourceManager
 import visa
 #TODO: handle automagic Sourcemeter choice and write this info into the measurement file
 from scientificdevices.keithley.sourcemeter2400 import Sourcemeter2400
+from scientificdevices.keithley.sourcemeter2602A import Sourcemeter2602A
+from scientificdevices.keithley.sourcemeter2636A import Sourcemeter2636A
 
 
 @register('SourceMeter two probe voltage sweep')
 class SMU2Probe(AbstractMeasurement):
     """Voltage driven 2-probe current measurement on a sourcemeter."""
 
-    GPIB_RESOURCE = "GPIB::10::INSTR"
     VISA_LIBRARY = "@py"
     QUERY_DELAY = 0.0
 
     def __init__(self, signal_interface: SignalInterface,
                  path: str, contacts: Tuple[str, str],
                  v: float = 0.0, i: float = 1e-6, n: int = 100,
-                 nplc: int = 1, comment: str = '') -> None:
+                 nplc: int = 1, comment: str = '', gpib:str='') -> None:
         super().__init__(signal_interface, path, contacts)
         self._max_voltage = v
         self._current_limit = i
@@ -34,9 +35,24 @@ class SMU2Probe(AbstractMeasurement):
         self._comment = comment
 
         resource_man = ResourceManager(self.VISA_LIBRARY)
-        resource = resource_man.open_resource(self.GPIB_RESOURCE, query_delay=self.QUERY_DELAY)
-        self._device = Sourcemeter2400(resource)
+        resource = resource_man.open_resource(gpib, query_delay=self.QUERY_DELAY)
+
+        self._device = SMU2Probe._get_sourcemeter(resource)
         self._device.voltage_driven(0, i, nplc)
+
+
+    @staticmethod
+    def _get_sourcemeter(resource):
+        identification = resource.query('*IDN?')
+        if '2400' in identification:
+            return Sourcemeter2400(resource)
+        elif '2602' in identification:
+            return Sourcemeter2602A(resource)
+        elif '2636' in identification:
+            return Sourcemeter2636A(resource)
+        else:
+            raise ValueError('Sourcemeter "{}" not known.'.format(identification))
+
 
     @staticmethod
     def number_of_contacts():
@@ -48,7 +64,8 @@ class SMU2Probe(AbstractMeasurement):
                 'i': FloatValue('Current Limit', default=1e-6),
                 'n': IntegerValue('Number of Points', default=100),
                 'nplc': IntegerValue('NPLC', default=1),
-                'comment': StringValue('Comment', default='')}
+                'comment': StringValue('Comment', default=''),
+                'gpib': GPIBPathValue('GPIB Address', default='GPIB0::10::INSTR')}
 
     @staticmethod
     def outputs() -> Dict[str, AbstractValue]:

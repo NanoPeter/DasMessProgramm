@@ -1,5 +1,5 @@
 from .measurement import register, SignalInterface, AbstractValue, AbstractMeasurement
-from .measurement import FloatValue, IntegerValue, StringValue, DatetimeValue
+from .measurement import FloatValue, IntegerValue, StringValue, DatetimeValue, GPIBPathValue
 
 from typing import Dict, Tuple, Union
 
@@ -34,7 +34,8 @@ class SMU2ProbeIvt(AbstractMeasurement):
         return {'v': FloatValue('Maximum Voltage', default=0.0),
                 'i': FloatValue('Current Limit', default=1e-6),
                 'nplc': IntegerValue('NPLC', default=1),
-                'comment': StringValue('Comment', default='')}
+                'comment': StringValue('Comment', default=''),
+                'gpib': GPIBPathValue('GPIB Address', default='GPIB0::10::INSTR')}
 
     @staticmethod
     def outputs() -> Dict[str, AbstractValue]:
