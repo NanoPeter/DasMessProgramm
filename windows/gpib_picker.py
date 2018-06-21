@@ -38,7 +38,11 @@ class GPIBPicker(QWidget):
 
     def update_devices(self):
         rm = ResourceManager('@py')
-        self._resources = [ x for x in rm.list_resources() if 'GPIB' in x]
+
+        try:
+            self._resources = [ x for x in rm.list_resources() if 'GPIB' in x]
+        except:
+            self._resources = []
 
         self._combobox.clear()
 
