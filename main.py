@@ -196,8 +196,12 @@ class Main(QtWidgets.QMainWindow):
         self.__method_selection_box.currentTextChanged.connect(
             lambda title: self.__measurement_method_selected(title, measurement.REGISTRY[title])
         )
-        
+
         self.__dynamic_inputs_area = QtWidgets.QScrollArea()
+        # Initialise and hold all dynamic inputs in memory:
+        self.__dynamic_inputs = dict()  # type: Dict[Type, QtWidgets.QWidget]
+        self.__create_input_ui()
+        
         self.__dynamic_inputs_area.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.__dynamic_inputs_area.setFixedWidth(self.SIDE_BAR_WIDTH)
         self.__dynamic_inputs_area.setWidgetResizable(True)
@@ -249,8 +253,8 @@ class Main(QtWidgets.QMainWindow):
             button.setEnabled(True)
 
         self.setWindowTitle('{} -- {}'.format(self.TITLE, title))
-        self.__create_input_ui(cls.inputs())
         self._measurement_class = cls
+        self.__set_input_ui(cls)
 
         if cls.number_of_contacts() == Contacts.FOUR:
             four_wire_visible = True
@@ -354,25 +358,38 @@ class Main(QtWidgets.QMainWindow):
         self.__show_status('Measurement finished.')
         self._set_ui_state(True)
 
-    def __create_input_ui(self, inputs):
-        """Dynamically set left panel user input widgets.
+    def __create_input_ui(self):
+        """Create inputs for all measurement methods and keep them hidden.
 
-        Arguments:
-            inputs: Dict[str, AbstractInput]: A dictionary of inputs as defined in SMU2Probe.inputs
+        They can be selectively shown using '__set_input_ui()'.
         """
-        # Remove old dynamic layout, if any:
-        if self.__dynamic_inputs_layout is not None:
-            delete_children(self.__dynamic_inputs_layout)
-            del self.__dynamic_inputs_layout
+        # Create all input containers:
+        for method in measurement.REGISTRY.values():
+            container = QtWidgets.QWidget()
+            container.setLayout(DynamicInputLayout(method.inputs()))
 
-        self.__dynamic_inputs_layout = DynamicInputLayout(inputs)
+            self.__dynamic_inputs[method] = container
+            
+        # Add them all to the dynamic input area and hide everything:
+        parent_container = QtWidgets.QWidget()
+        parent_layout = QtWidgets.QHBoxLayout()
+        parent_layout.setContentsMargins(0, 0, 0, 0)
+        parent_container.setLayout(parent_layout)
+        for container in self.__dynamic_inputs.values():
+            parent_layout.addWidget(container)
+            container.hide()
 
-        container_widget = QtWidgets.QWidget()
-        container_widget.setLayout(self.__dynamic_inputs_layout)
+        self.__dynamic_inputs_area.setWidget(parent_container)
 
-        old_container = self.__dynamic_inputs_area.widget()
-        del old_container
-        self.__dynamic_inputs_area.setWidget(container_widget)
+    def __set_input_ui(self, measurement_method: Type):
+        """Show the dynamic inputs for a measurement method."""
+        for method, container in self.__dynamic_inputs.items():
+            if method is measurement_method:
+                container.show()
+                self.__dynamic_inputs_layout = container.layout()
+            else:
+                container.hide()
+        
 
     @QtCore.pyqtSlot()
     def __set_directory_name(self):
