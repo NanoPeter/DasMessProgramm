@@ -251,5 +251,5 @@ class MainUI(QtWidgets.QMainWindow):
 
         if dir_name != '':
             self._directory_name = dir_name
-            self.__file_name_display.setText(self._directory_name)
+            self._file_name_display.setText(self._directory_name)
             self._update_config()

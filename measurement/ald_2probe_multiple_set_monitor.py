@@ -13,9 +13,9 @@ from datetime import datetime
 @register('ALD 2probe multiple SET monitor')
 class Ald2ProbeMultipleSETMonitor(AbstractMeasurement):
 
-    GPIB_RESOURCE_2400_1 = 'GPIB0::10::INSTR'
+    GPIB_RESOURCE_2400 = 'GPIB0::10::INSTR'
+    GPIB_RESOURCE_2636A = 'GPIB0::11::INSTR'
     GPIB_RESOURCE_2602A = 'GPIB0::12::INSTR'
-    GPIB_RESOURCE_2400_2 = 'GPIB0::13::INSTR'
 
     def __init__(self, signal_interface: SignalInterface,
                  path: str, contacts: Tuple[str, str],
@@ -26,7 +26,9 @@ class Ald2ProbeMultipleSETMonitor(AbstractMeasurement):
                  sample3_v: float = 0.0, sample3_i: float = 1e-6,
                  sample3_nplc: int = 3, sample3_comment: str = '',
                  sample4_v: float = 0.0, sample4_i: float = 1e-6,
-                 sample4_nplc: int = 3, sample4_comment: str = ''):
+                 sample4_nplc: int = 3, sample4_comment: str = '',
+                 sample5_v: float = 0.0, sample5_i: float = 1e-6,
+                 sample5_nplc: int = 3, sample5_comment: str = ''):
 
         super().__init__(signal_interface, path, contacts)
 
@@ -34,21 +36,23 @@ class Ald2ProbeMultipleSETMonitor(AbstractMeasurement):
         self._sample2 = {'v': sample2_v, 'i': sample2_i, 'nplc': sample2_nplc, 'comment': sample2_comment}
         self._sample3 = {'v': sample3_v, 'i': sample3_i, 'nplc': sample3_nplc, 'comment': sample3_comment}
         self._sample4 = {'v': sample4_v, 'i': sample4_i, 'nplc': sample4_nplc, 'comment': sample4_comment}
+        self._sample5 = {'v': sample5_v, 'i': sample5_i, 'nplc': sample5_nplc, 'comment': sample5_comment}
 
-        self._samples = [self._sample1, self._sample2, self._sample3, self._sample4]
+        self._samples = [self._sample1, self._sample2, self._sample3, self._sample4, self._sample5]
 
         self._init_smus()
 
     def _init_smus(self):
         rm = ResourceManager('@py')
-        dev1 = rm.open_resource(self.GPIB_RESOURCE_2400_1)
-        dev2 = rm.open_resource(self.GPIB_RESOURCE_2400_2)
+        dev1 = rm.open_resource(self.GPIB_RESOURCE_2400)
+        dev2 = rm.open_resource(self.GPIB_RESOURCE_2636A)
         dev3 = rm.open_resource(self.GPIB_RESOURCE_2602A)
 
         self._smus = [Sourcemeter2400(dev1),
-                      Sourcemeter2400(dev2),
-                      Sourcemeter2636A(dev3, sub_device=SMUChannel.channelA),
-                      Sourcemeter2636A(dev3, sub_device=SMUChannel.channelB)]
+                      Sourcemeter2636A(dev2, sub_device=SMUChannel.channelA),
+                      Sourcemeter2636A(dev2, sub_device=SMUChannel.channelB),
+                      Sourcemeter2602A(dev3, sub_device=SMUChannel.channelA),
+                      Sourcemeter2602A(dev3, sub_device=SMUChannel.channelB)]
 
         for index, smu in enumerate(self._smus):
             sample = self._samples[index]
@@ -75,7 +79,11 @@ class Ald2ProbeMultipleSETMonitor(AbstractMeasurement):
                 'sample4_v': FloatValue('(4) Maximum Voltage', default=1e-3),
                 'sample4_i': FloatValue('(4) Current Limit', default=1e-6),
                 'sample4_nplc': IntegerValue('(4) NPLC', default=1),
-                'sample4_comment': StringValue('(4) Comment')
+                'sample4_comment': StringValue('(4) Comment'),
+                'sample5_v': FloatValue('(5) Maximum Voltage', default=1e-3),
+                'sample5_i': FloatValue('(5) Current Limit', default=1e-6),
+                'sample5_nplc': IntegerValue('(5) NPLC', default=1),
+                'sample5_comment': StringValue('(5) Comment')
                 }
 
     @staticmethod
@@ -92,6 +100,9 @@ class Ald2ProbeMultipleSETMonitor(AbstractMeasurement):
                 'v4': FloatValue('Voltage [V]'),
                 'i4': FloatValue('Current [A]'),
                 'c4': FloatValue('Conductance [S]'),
+                'v5': FloatValue('Voltage [V]'),
+                'i5': FloatValue('Current [A]'),
+                'c5': FloatValue('Conductance [S]'),
                 'datetime': DatetimeValue('Timestamp')}
 
     @property
@@ -103,7 +114,9 @@ class Ald2ProbeMultipleSETMonitor(AbstractMeasurement):
                 PlotRecommendation('Sample3 - Conductance vs. Time',
                                    x_label='datetime', y_label='c3'),
                 PlotRecommendation('Sample4 - Conductance vs. Time',
-                                   x_label='datetime', y_label='c4')
+                                   x_label='datetime', y_label='c4'),
+                PlotRecommendation('Sample5 - Conductance vs. Time',
+                                   x_label='datetime', y_label='c5')
                 ]
 
     def _measure(self, file_handle):
@@ -131,7 +144,7 @@ class Ald2ProbeMultipleSETMonitor(AbstractMeasurement):
             file_handle.write("# applied voltage {} V\n".format(sample['v']))
             file_handle.write("# current limit {} A\n".format(sample['i']))
             file_handle.write('# nplc {}\n'.format(sample['nplc']))
-        file_handle.write("Datetime Voltage1 Current1 Conductance1 Voltage2 Current2 Conductance2 Voltage3 Current3 Conductance3 Voltage4 Current4 Conductance4\n")
+        file_handle.write("Datetime Voltage1 Current1 Conductance1 Voltage2 Current2 Conductance2 Voltage3 Current3 Conductance3 Voltage4 Current4 Conductance4 Voltage5 Current5 Conductance5\n")
 
     def __get_data(self):
         all_data = {}
@@ -158,7 +171,7 @@ class Ald2ProbeMultipleSETMonitor(AbstractMeasurement):
 
     def __write_data(self, data, file_handle):
         datetime_string = data['datetime'].isoformat()
-        file_handle.write('{datetime} {data[v1]} {data[i1]} {data[c1]} {data[v2]} {data[i2]} {data[c2]} {data[v3]} {data[i3]} {data[c3]} {data[v4]} {data[i4]} {data[c4]}\n'.format(datetime=datetime_string, data=data))
+        file_handle.write('{datetime} {data[v1]} {data[i1]} {data[c1]} {data[v2]} {data[i2]} {data[c2]} {data[v3]} {data[i3]} {data[c3]} {data[v4]} {data[i4]} {data[c4]} {data[v5]} {data[i5]} {data[c5]}\n'.format(datetime=datetime_string, data=data))
 
     def __arm_devices(self):
         for index, smu in enumerate(self._smus):

@@ -238,7 +238,7 @@ class Main(MainUI):
     def __started(self):
         self._show_status('Measurement running ...')
 
-    def __update_config(self):
+    def _update_config(self):
         print('updating config')
         if 'general' in self._config:
             self._config['general']['last_folder'] = self._directory_name
