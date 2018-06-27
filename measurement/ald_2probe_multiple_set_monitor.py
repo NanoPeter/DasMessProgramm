@@ -66,7 +66,7 @@ class Ald2ProbeMultipleSETMonitor(AbstractMeasurement):
     def inputs() -> Dict[str, AbstractValue]:
         return {'sample1_v': FloatValue('(1) Maximum Voltage', default=1e-3),
                 'sample1_i': FloatValue('(1) Current Limit', default=1e-6),
-                'sample1_nplc': IntegerValue('(1) NPLC', default=1),
+                'sample1_nplc': IntegerValue('(1) NPLC', default=1),l
                 'sample1_comment': StringValue('(1) Comment'),
                 'sample2_v': FloatValue('(2) Maximum Voltage', default=1e-3),
                 'sample2_i': FloatValue('(2) Current Limit', default=1e-6),
