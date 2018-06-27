@@ -6,8 +6,8 @@ from datetime import datetime
 from PyQt5 import QtCore, QtWidgets, QtGui
 from typing import Type
 
-from contacts_picker import ContactsPicker
-from directory_picker import DirectoryPicker
+from windows.contacts_picker import ContactsPicker
+from windows.directory_picker import DirectoryPicker
 
 
 class MainUI(QtWidgets.QMainWindow):
@@ -57,7 +57,7 @@ class MainUI(QtWidgets.QMainWindow):
         # Initialise and hold all dynamic inputs in memory:
         self._dynamic_inputs = dict()  # type: Dict[Type, QtWidgets.QWidget]
         self.__create_input_ui()
-        
+
         self._dynamic_inputs_area.setFrameShape(QtWidgets.QFrame.NoFrame)
         self._dynamic_inputs_area.setFixedWidth(self.SIDE_BAR_WIDTH)
         self._dynamic_inputs_area.setWidgetResizable(True)
@@ -74,7 +74,7 @@ class MainUI(QtWidgets.QMainWindow):
         button_layout = QtWidgets.QHBoxLayout()
         right_side_layout.addLayout(button_layout)
         button_layout.addStretch()
-        
+
         self._measure_button = QtWidgets.QPushButton("Measure")
         button_layout.addWidget(self._measure_button)
         self._measure_button.setFixedWidth(100)

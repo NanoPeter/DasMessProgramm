@@ -15,10 +15,13 @@ class ClickableLineEdit(QLineEdit):
         self.deselect()
 
     def mouseReleaseEvent(self, e: QMouseEvent):
-        super().mouseReleaseEvent(e)
-
         if e.button() == Qt.RightButton:
             self.right_clicked.emit()
+        super().mouseReleaseEvent(e)
+        
+    def contextMenuEvent(self, event):
+        pass
+
 
 
 class DirectoryPicker(QWidget):
@@ -48,10 +51,10 @@ class DirectoryPicker(QWidget):
 
         layout.addWidget(self._directory_path)
 
-        self._directory_path.right_clicked.connect(self._right_click)
         self._directory_path.double_clicked.connect(self._select_directory)
+        self._directory_path.right_clicked.connect(self._open_directory)
 
-    def _right_click(self):
+    def _open_directory(self):
         QDesktopServices.openUrl(QUrl.fromUserInput(self.directory))
 
     def _select_directory(self):

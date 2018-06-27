@@ -51,7 +51,7 @@ class SignalDataAcquisition(QtCore.QObject, SignalInterface):
 
 class WrapAroundList(list):
     """A standard list with wrap-around indexing.
-    
+
     Wrap-around indexing only for reading.
     """
 
@@ -163,6 +163,10 @@ class Main(MainUI):
 
         self._plot_windows = {}
 
+        contacts = self._contacts_picker.selected
+
+        contacts_string = ' '.join(contacts)
+
         for recommended_plot in self._measurement.recommended_plots:
             pair = (recommended_plot.x_label, recommended_plot.y_label)
             if pair not in self._plot_windows:
@@ -172,8 +176,7 @@ class Main(MainUI):
 
                 window = PlotWindow(
                     recommended_plot,
-                    "| Contacts: '{}' '{}'".format(self._contact_input_first.currentText(),
-                                                   self._contact_input_second.currentText()),
+                    "| Contacts: '{}'".format(contacts_string),
                     x_axis_label=x_label, y_axis_label=y_label
                 )
                 self._plot_windows[pair] = window
@@ -192,7 +195,7 @@ class Main(MainUI):
         return tuple(self._contacts_picker.selected)
 
     def __get_path(self):
-        return self._file_name_display.text()
+        return self._dir_picker.directory
 
     def __finished(self, data_dict):
         # Save plots:
