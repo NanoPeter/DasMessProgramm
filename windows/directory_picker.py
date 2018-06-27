@@ -5,7 +5,7 @@ from PyQt5.QtGui import QDesktopServices, QMouseEvent
 from PyQt5.QtCore import QUrl, pyqtSignal, Qt
 
 
-class MyLineEdit(QLineEdit):
+class ClickableLineEdit(QLineEdit):
     right_clicked = pyqtSignal()
     double_clicked = pyqtSignal()
 
@@ -43,7 +43,7 @@ class DirectoryPicker(QWidget):
 
         layout.addWidget(QLabel('Select Directory:'))
 
-        self._directory_path = MyLineEdit()
+        self._directory_path = ClickableLineEdit()
         self._directory_path.setReadOnly(True)
 
         layout.addWidget(self._directory_path)
