@@ -6,6 +6,9 @@ from datetime import datetime
 from PyQt5 import QtCore, QtWidgets, QtGui
 from typing import Type
 
+from contacts_picker import ContactsPicker
+from directory_picker import DirectoryPicker
+
 
 class MainUI(QtWidgets.QMainWindow):
     """Class that generates the layout for the main application window."""
@@ -24,62 +27,12 @@ class MainUI(QtWidgets.QMainWindow):
         self._inputs_layout.setSpacing(10)
         central_layout.addLayout(self._inputs_layout)
 
-        file_name_layout = QtWidgets.QVBoxLayout()
-        self._inputs_layout.addLayout(file_name_layout)
-        file_name_layout.setSpacing(5)
-        file_name_layout.addWidget(QtWidgets.QLabel("Save directory:"))
-        self._file_name_display = QtWidgets.QLineEdit()
-        self._file_name_display.setFixedWidth(self.SIDE_BAR_WIDTH)  # Also sets left panel width
-        file_name_layout.addWidget(self._file_name_display)
-        self._file_name_display.setReadOnly(True)
-        self._file_name_display.textChanged.connect(
-            lambda text: self._file_name_display.setToolTip(text)
-        )
-        self._file_name_display.setText(self._directory_name)
-        directory_buttons_layout = QtWidgets.QHBoxLayout()
-        file_name_layout.addLayout(directory_buttons_layout)
-        self._select_directory_button = QtWidgets.QPushButton("Select...")
-        directory_buttons_layout.addWidget(self._select_directory_button)
-        self._select_directory_button.clicked.connect(self._set_directory_name)
-        self._open_directory_button = QtWidgets.QPushButton("Open...")
-        directory_buttons_layout.addWidget(self._open_directory_button)
-        self._open_directory_button.clicked.connect(
-            lambda: QtGui.QDesktopServices.openUrl(
-                QtCore.QUrl.fromUserInput(self._file_name_display.text())
-            )
-        )
-        
-        contacts_layout = QtWidgets.QVBoxLayout()
-        self._inputs_layout.addLayout(contacts_layout)
-        contacts_layout.setSpacing(3)
-        contacts_layout.addWidget(QtWidgets.QLabel("Contacts:"))
-        first_contact_pair = QtWidgets.QHBoxLayout()
-        contacts_layout.addLayout(first_contact_pair)
-        self._contact_input_first = QtWidgets.QComboBox()
-        first_contact_pair.addWidget(self._contact_input_first)
-        self._contact_input_second = QtWidgets.QComboBox()
-        first_contact_pair.addWidget(self._contact_input_second)
-        self._sense_contacts_label = QtWidgets.QLabel("4-wire sense contacts:")
-        contacts_layout.addWidget(self._sense_contacts_label)
-        second_contact_pair = QtWidgets.QHBoxLayout()
-        contacts_layout.addLayout(second_contact_pair)
-        self._contact_input_third = QtWidgets.QComboBox()
-        second_contact_pair.addWidget(self._contact_input_third)
-        self._contact_input_fourth = QtWidgets.QComboBox()
-        second_contact_pair.addWidget(self._contact_input_fourth)
-        for contact in self.CONTACT_NUMBERS:
-            self._contact_input_first.addItem(contact)
-            self._contact_input_second.addItem(contact)
-            self._contact_input_third.addItem(contact)
-            self._contact_input_fourth.addItem(contact)
-        self._contact_input_first.setCurrentIndex(0)
-        self._contact_input_first.setFixedWidth(80)
-        self._contact_input_second.setCurrentIndex(1)
-        self._contact_input_second.setFixedWidth(80)
-        self._contact_input_third.setCurrentIndex(2)
-        self._contact_input_third.setFixedWidth(80)
-        self._contact_input_fourth.setCurrentIndex(3)
-        self._contact_input_fourth.setFixedWidth(80)
+        self._dir_picker = DirectoryPicker()
+        self._inputs_layout.addWidget(self._dir_picker)
+        self._dir_picker.directory_changed.connect(self._set_directory_name)
+
+        self._contacts_picker = ContactsPicker()
+        self._inputs_layout.addWidget(self._contacts_picker)
 
         method_layout = QtWidgets.QVBoxLayout()
         method_layout.setSpacing(3)
@@ -201,12 +154,6 @@ class MainUI(QtWidgets.QMainWindow):
         self._measure_button.setEnabled(enable)
         self._next_button.setEnabled(enable)
         self._dynamic_inputs_layout.setEnabled(enable)
-        self._select_directory_button.setEnabled(enable)
-        self._open_directory_button.setEnabled(enable)
-        self._contact_input_first.setEnabled(enable)
-        self._contact_input_second.setEnabled(enable)
-        self._contact_input_third.setEnabled(enable)
-        self._contact_input_fourth.setEnabled(enable)
 
     def _set_input_ui(self, measurement_method: measurement.measurement.AbstractMeasurement):
         """Show the dynamic inputs for a measurement method."""
@@ -243,13 +190,10 @@ class MainUI(QtWidgets.QMainWindow):
 
         self._dynamic_inputs_area.setWidget(parent_container)
 
-    @QtCore.pyqtSlot()
-    def _set_directory_name(self):
-        """Open a dialogue to change the output directory."""
-        dir_name = QtWidgets.QFileDialog.getExistingDirectory(self, 'Open Measurement Directory',
-                                                              self._directory_name)
+    @QtCore.pyqtSlot(str)
+    def _set_directory_name(self, dir_name):
+        self._directory_name = dir_name
+        self._update_config()
 
-        if dir_name != '':
-            self._directory_name = dir_name
-            self._file_name_display.setText(self._directory_name)
-            self._update_config()
+    def _update_config(self):
+        pass
