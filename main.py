@@ -100,8 +100,10 @@ class Main(MainUI):
             if 'last_folder' in self._config['general']:
                 self._directory_name = self._config['general']['last_folder']
             else:
+                self._config['general']['last_folder'] = '/tmp'
                 self._directory_name = '/tmp'
         else:
+            self._config['general'] = {'last_folder': '/tmp'}
             self._directory_name = '/tmp'
 
         self._measurement_class = AbstractMeasurement
@@ -110,6 +112,7 @@ class Main(MainUI):
         self._init_gui()
         self.__setup_connections()
 
+        self._dir_picker.directory = self._directory_name
 
     def __setup_connections(self):
         """Connect UI elements to slots that deal with measurement."""
@@ -120,8 +123,6 @@ class Main(MainUI):
         self._abort_button.clicked.connect(self.__abort_measurement)
         self._next_button.clicked.connect(self.__increment_contact_number)
 
-
-
     def __measurement_method_selected(self, title, cls: AbstractMeasurement):
         for button in [self._next_button, self._abort_button, self._measure_button]:
             button.setEnabled(True)
@@ -130,15 +131,11 @@ class Main(MainUI):
         self._measurement_class = cls
         self._set_input_ui(cls)
 
-        if cls.number_of_contacts() == Contacts.FOUR:
-            four_wire_visible = True
-        else:
-            four_wire_visible = False
+        number_of_contacts = cls.number_of_contacts()
 
-        self._sense_contacts_label.setVisible(four_wire_visible)
-        self._contact_input_third.setVisible(four_wire_visible)
-        self._contact_input_fourth.setVisible(four_wire_visible)
-        self._next_button.setVisible(not four_wire_visible)
+        self._contacts_picker.set_number_of_contacts(number_of_contacts)
+
+        self._next_button.setVisible(number_of_contacts == Contacts.TWO)
 
     def __start__measurement(self):
         contacts = self.__get_contacts()
@@ -161,7 +158,7 @@ class Main(MainUI):
 
         self._measurement = self._measurement_class(self.__signal_interface,
                                                     path, contacts, **inputs)
-                
+
         self.__df = pd.DataFrame()
 
         self._plot_windows = {}
@@ -172,7 +169,7 @@ class Main(MainUI):
                 outputs = self._measurement_class.outputs()
                 x_label = outputs[pair[0]].fullname
                 y_label = outputs[pair[1]].fullname
-                
+
                 window = PlotWindow(
                     recommended_plot,
                     "| Contacts: '{}' '{}'".format(self._contact_input_first.currentText(),
@@ -188,20 +185,11 @@ class Main(MainUI):
 
         self._set_ui_state(False)
 
-
     def __abort_measurement(self):
         self._measurement.abort()
 
     def __get_contacts(self) -> Tuple[str, ...]:
-        contact_inputs = [self._contact_input_first, self._contact_input_second,
-                          self._contact_input_third, self._contact_input_fourth]
-        contacts = []  # type: List[str]
-
-        for contact_input in contact_inputs:
-            if contact_input.isVisible():
-                contacts.append(contact_input.currentText().replace(' ', '_'))
-
-        return tuple(contacts)
+        return tuple(self._contacts_picker.selected)
 
     def __get_path(self):
         return self._file_name_display.text()
@@ -230,20 +218,19 @@ class Main(MainUI):
     @QtCore.pyqtSlot()
     def __increment_contact_number(self):
         """Switch to the next contact pair in the list."""
-        for contact in [self._contact_input_first, self._contact_input_second]:
-            index = contact.currentIndex()  # type: int
-            index = self.CONTACT_NUMBERS.wrap_around_index(index + 1)
-            contact.setCurrentIndex(index)
+        self._contacts_picker.next()
 
     def __started(self):
         self._show_status('Measurement running ...')
 
     def _update_config(self):
         print('updating config')
-        if 'general' in self._config:
-            self._config['general']['last_folder'] = self._directory_name
-            print(self._config['general']['last_folder'])
-            
+
+        if 'general' not in self._config:
+            self._config['general'] = {}
+
+        self._config['general']['last_folder'] = self._directory_name
+
         with open('settings.cfg', 'w') as file_handle:
             self._config.write(file_handle)
 
