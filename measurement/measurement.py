@@ -192,7 +192,7 @@ class AbstractMeasurement(ABC):
     def __init__(self,
                  signal_interface: SignalInterface,
                  path: str,
-                 contacts: Union[Tuple, Tuple[str, str], Tuple[str, str, str, str]],
+                 contacts: Tuple[str, ...],
                  **kwargs) -> None:
         """
         :param signal_interface: An object which is derived from SignalInterface
@@ -287,7 +287,17 @@ class AbstractMeasurement(ABC):
         pass
 
     def _write_overview(self, comment_lines: List[str] = [],  **data) -> None:
-        print("DEBUG: write_overview called")
-        overview_file = Overview(self._path, self.__class__.__name__, list(data.keys()), comment_lines)
-        overview_file.add_measurement(**data)
+        columns = list(data.keys())
+        measurement_data = dict(data)
+        
+        contacts_string = ""
+        for contact in self._contacts:
+            contacts_string += contact + " "
+        if contacts_string != "":
+            columns.append("Contacts")
+            measurement_data["Contacts"] = contacts_string[:-1]  # Omit trailing space
+                        
+        columns.sort()
+        overview_file = Overview(self._path, self.__class__.__name__, columns, comment_lines)
+        overview_file.add_measurement(**measurement_data)
 
