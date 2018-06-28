@@ -13,6 +13,8 @@ from windows.directory_picker import DirectoryPicker
 class MainUI(QtWidgets.QMainWindow):
     """Class that generates the layout for the main application window."""
 
+    SIDE_BAR_WIDTH = 200
+    
     def __init__(self):
         super().__init__()
 
@@ -28,10 +30,12 @@ class MainUI(QtWidgets.QMainWindow):
         central_layout.addLayout(self._inputs_layout)
 
         self._dir_picker = DirectoryPicker()
+        self._dir_picker.setFixedWidth(self.SIDE_BAR_WIDTH)
         self._inputs_layout.addWidget(self._dir_picker)
         self._dir_picker.directory_changed.connect(self._set_directory_name)
 
         self._contacts_picker = ContactsPicker()
+        self._contacts_picker.setFixedWidth(self.SIDE_BAR_WIDTH)
         self._inputs_layout.addWidget(self._contacts_picker)
 
         method_layout = QtWidgets.QVBoxLayout()

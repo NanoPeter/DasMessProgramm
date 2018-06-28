@@ -25,6 +25,8 @@ class ClickableLineEdit(QLineEdit):
 
 
 class DirectoryPicker(QWidget):
+    TOOL_TIP = "Double-click to select a directory\n" \
+               "Right-click to open current directory"
 
     directory_changed = pyqtSignal(str)
 
@@ -43,11 +45,14 @@ class DirectoryPicker(QWidget):
     def _init_gui(self):
         layout = QVBoxLayout()
         self.setLayout(layout)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(3)
 
         layout.addWidget(QLabel('Select Directory:'))
 
         self._directory_path = ClickableLineEdit()
         self._directory_path.setReadOnly(True)
+        self._directory_path.setToolTip(self.TOOL_TIP)
 
         layout.addWidget(self._directory_path)
 
