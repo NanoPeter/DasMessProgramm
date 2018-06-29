@@ -105,7 +105,8 @@ class SMU2Probe(AbstractMeasurement):
 
         self.__deinitialize_device()
         
-        resistance, _ = np.polyfit(currents, voltages, 1)
+        conductance, _ = np.polyfit(voltages, currents, 1)
+        resistance = 1 / conductance
         self._write_overview(Resistance=resistance, Datetime=datetime.now().isoformat(),
                              Aborted=self._should_stop.is_set())
 
