@@ -48,6 +48,7 @@ class SMU2Probe(AbstractMeasurement):
     @staticmethod
     def _get_sourcemeter(resource):
         identification = resource.query('*IDN?')
+        print('DEBUG', identification)
         if '2400' in identification:
             return Sourcemeter2400(resource)
         elif '2602' in identification:
@@ -104,7 +105,7 @@ class SMU2Probe(AbstractMeasurement):
             self._signal_interface.emit_data({'v': voltage, 'i': current, 'datetime': datetime.now()})
 
         self.__deinitialize_device()
-        
+
         conductance, _ = np.polyfit(voltages, currents, 1)
         resistance = 1 / conductance
         self._write_overview(Resistance=resistance, Datetime=datetime.now().isoformat(),
