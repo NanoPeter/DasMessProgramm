@@ -41,7 +41,7 @@ class PlotWidget(FigureCanvas):
         self.add_figure(x_data, y_data)
 
     def add_figure(self, x_data: List[float], y_data: List[float]) -> None:
-        self._axes.plot(x_data, y_data)
+        self._axes.plot(x_data, y_data, 'x')
         self.draw()
 
     def add_text(self, text: str, x: float = 0.2, y: float = 0.9) -> None:
