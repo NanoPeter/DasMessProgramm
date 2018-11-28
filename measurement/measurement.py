@@ -202,6 +202,7 @@ class AbstractMeasurement(ABC):
         self._path = path
         self._contacts = contacts
         self._should_stop = Event()
+        self._should_stop.clear()
         self._recommended_plot_file_paths = {}
 
     @staticmethod
@@ -275,11 +276,13 @@ class AbstractMeasurement(ABC):
 
     def __call__(self) -> None:
         self._signal_interface.emit_started()
-        self._should_stop.clear()
-        self._generate_all_file_names()
-        print('writing to {}'.format(self._file_path))
-        with open(self._file_path, 'w') as file_handle:
-            self._measure(file_handle)
+        
+        if not self._should_stop.is_set():
+            self._generate_all_file_names()
+            print('writing to {}'.format(self._file_path))
+            with open(self._file_path, 'w') as file_handle:
+                self._measure(file_handle)
+                
         self._signal_interface.emit_finished(self._recommended_plot_file_paths)
 
     @abstractmethod
