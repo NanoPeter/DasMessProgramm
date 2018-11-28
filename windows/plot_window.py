@@ -40,8 +40,8 @@ class PlotWidget(FigureCanvas):
         self._axes.set_ylabel(self._y_axis_label)
         self.add_figure(x_data, y_data)
 
-    def add_figure(self, x_data: List[float], y_data: List[float]) -> None:
-        self._axes.plot(x_data, y_data)
+    def add_figure(self, x_data: List[float], y_data: List[float], style='x') -> None:
+        self._axes.plot(x_data, y_data, style)
         self.draw()
 
     def add_text(self, text: str, x: float = 0.2, y: float = 0.9) -> None:
@@ -94,7 +94,7 @@ class PlotWindow(QMdiSubWindow):
 
                 show_text = '\n'.join(show_text_lines)
 
-                self._plot_widget.add_figure(fit_data[:, 0], fit_data[:, 1])
+                self._plot_widget.add_figure(fit_data[:, 0], fit_data[:, 1], '-')
                 self._plot_widget.add_text(show_text)
 
     def save_plot(self, file_path: str) -> None:
