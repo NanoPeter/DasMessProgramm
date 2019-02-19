@@ -6,7 +6,8 @@ from datetime import datetime
 from PyQt5 import QtCore, QtWidgets, QtGui
 from typing import Type
 
-from windows.contacts_picker import ContactsPicker
+#from windows.contacts_picker import ContactsPicker
+from windows.sample_widget import ContactsSelector
 from windows.directory_picker import DirectoryPicker
 
 
@@ -34,7 +35,8 @@ class MainUI(QtWidgets.QMainWindow):
         self._inputs_layout.addWidget(self._dir_picker)
         self._dir_picker.directory_changed.connect(self._set_directory_name)
 
-        self._contacts_picker = ContactsPicker()
+        self._contacts_picker = ContactsSelector()
+        
         self._contacts_picker.setFixedWidth(self.SIDE_BAR_WIDTH)
         self._inputs_layout.addWidget(self._contacts_picker)
 

@@ -163,7 +163,7 @@ class Main(MainUI):
 
         self._plot_windows = {}
 
-        contacts = self._contacts_picker.selected
+        contacts = self._contacts_picker.contacts
 
         contacts_string = ' '.join(contacts)
 
@@ -192,7 +192,7 @@ class Main(MainUI):
         self._measurement.abort()
 
     def __get_contacts(self) -> Tuple[str, ...]:
-        return tuple(self._contacts_picker.selected)
+        return tuple(self._contacts_picker.contacts)
 
     def __get_path(self):
         return self._dir_picker.directory
