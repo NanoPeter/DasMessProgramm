@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QMdiSubWindow, QSizePolicy
+from PyQt5.QtWidgets import QMdiSubWindow, QSizePolicy, QWidget, QVBoxLayout
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import Qt
 
@@ -6,6 +6,7 @@ from PyQt5.QtCore import Qt
 import matplotlib
 matplotlib.use('Qt5Agg')
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 
 from pandas import DataFrame
@@ -62,16 +63,25 @@ class PlotWindow(QMdiSubWindow):
         super().__init__()
 
         self._recommendation = plot_recommendation
+        self.resize(512, 512)
 
         self.setWindowTitle("{} {}".format(plot_recommendation.title,
                                            plot_title_suffix))
+
+        main_widget = QWidget()
+        self.setWidget(main_widget)
+        main_layout = QVBoxLayout()
+        main_widget.setLayout(main_layout)
 
         self._plot_widget = PlotWidget(
             plot_recommendation,
             x_axis_label=x_axis_label, y_axis_label=y_axis_label,
             title_suffix=plot_title_suffix
         )
-        self.setWidget(self._plot_widget)
+
+        main_layout.addWidget(NavigationToolbar(self._plot_widget, self))
+        main_layout.addWidget(self._plot_widget)
+
         window_icon_pixmap = QPixmap(1, 1)
         window_icon_pixmap.fill(Qt.transparent)
         self.setWindowIcon(QIcon(window_icon_pixmap))
