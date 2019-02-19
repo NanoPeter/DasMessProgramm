@@ -8,6 +8,7 @@ matplotlib.use('Qt5Agg')
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
+from matplotlib.backend_bases import MouseEvent
 
 from pandas import DataFrame
 from typing import List, Tuple
@@ -28,11 +29,25 @@ class PlotWidget(FigureCanvas):
         self._y_axis_label = y_axis_label
         self._title_suffix = title_suffix
 
+        self._logy = False
+
         super().__init__(self._figure)
         self.setParent(parent)
 
         super().setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         super().updateGeometry()
+
+        self._figure.canvas.mpl_connect('button_press_event', self.on_click)
+
+    def on_click(self, event: MouseEvent):
+        if event.dblclick:
+            self._logy = ~self._logy
+
+            if self._logy:
+                self._axes.set_yscale('log', nonposy='clip')
+            else:
+                self._axes.set_yscale('linear')
+            self.draw()
 
     def update_figure(self, x_data: List[float], y_data: List[float]) -> None:
         self._axes.cla()
@@ -42,7 +57,10 @@ class PlotWidget(FigureCanvas):
         self.add_figure(x_data, y_data)
 
     def add_figure(self, x_data: List[float], y_data: List[float], style='x') -> None:
-        self._axes.plot(x_data, y_data, style)
+        if self._logy:
+            self._axes.semilogy(x_data, y_data, style)
+        else:
+            self._axes.plot(x_data, y_data, style)
         self.draw()
 
     def add_text(self, text: str, x: float = 0.2, y: float = 0.9) -> None:
@@ -53,6 +71,9 @@ class PlotWidget(FigureCanvas):
     def save_figure(self, plot_path: str) -> None:
         """Save plot to 'plot_path' as PDF."""
         self._figure.savefig(plot_path)
+
+    def set_logy(self, enababled=True):
+        self._logy = False
 
 
 class PlotWindow(QMdiSubWindow):
