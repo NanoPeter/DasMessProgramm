@@ -72,9 +72,6 @@ class PlotWidget(FigureCanvas):
         """Save plot to 'plot_path' as PDF."""
         self._figure.savefig(plot_path)
 
-    def set_logy(self, enababled=True):
-        self._logy = False
-
 
 class PlotWindow(QMdiSubWindow):
     """This is a simple sub window to show a plot of data
