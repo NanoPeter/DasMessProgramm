@@ -122,7 +122,8 @@ class PlotWindow(QMdiSubWindow):
 
                 show_text = '\n'.join(show_text_lines)
 
-                self._plot_widget.add_figure(fit_data[:, 0], fit_data[:, 1], '-')
+                if fit_data is not None:
+                    self._plot_widget.add_figure(fit_data[:, 0], fit_data[:, 1], '-')
                 self._plot_widget.add_text(show_text)
 
     def save_plot(self, file_path: str) -> None:

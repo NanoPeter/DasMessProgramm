@@ -175,12 +175,16 @@ class PlotRecommendation:
         :param y_data:  list of y data
         :return: A Dictionary with the fitted Data and tuple with xs and ys of the fit
         """
+        if len(x_data) < 2:
+            return {}, None
 
-        m, b = np.polyfit(x_data, y_data, 1)
+        params = np.polyfit(x_data, y_data, 1)
+        fit_func = np.poly1d(params)
 
-        x = np.array([np.min(x_data), np.max(x_data)])
-        y = x * m + b
+        x = np.linspace(np.min(x_data), np.max(x_data), len(x_data))
+        y = fit_func(x)
 
+        m,b = params
         return {'m': m, 'b': b}, np.array([x, y]).T
 
 
