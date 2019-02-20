@@ -41,6 +41,7 @@ class SampleConfig(QWidget):
 
         search_button = QPushButton('...')
 
+
         self._file_path_label = QLabel('Sample Config File')
 
         search_layout.addWidget(self._file_path_label)
@@ -54,7 +55,7 @@ class SampleConfig(QWidget):
 
         central_layout.addWidget(self._sample_selection)
 
-        self._configuration = dict(samples = [], comment='', date='', experiment='')
+        self._configuration = dict(samples = dict(), comment='', date='', experiment='')
 
         self._init_samples()
 
@@ -75,6 +76,16 @@ class SampleConfig(QWidget):
 
         for name, contacts in samples.items():
             method_model.appendRow(SampleItem(name, contacts))
+
+    def add_config(self, name: str, contacts_list) -> bool:
+        if name not in self._configuration['samples']:
+            self._configuration['samples'][name] = contacts_list
+            method_model = self._sample_selection.model()
+            method_model.appendRow(SampleItem(name, contacts_list))
+            self._sample_selection.setCurrentIndex(len(self._configuration['samples']))
+            return True 
+        else:
+            return False
 
     def _load(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "Open Samples Configuration", filter="Configuration (*.json)")

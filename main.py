@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 from PyQt5 import QtCore, QtWidgets, QtGui
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QInputDialog, QErrorMessage
 
 from main_ui import MainUI
 from windows.table_window import TableWindow
@@ -123,6 +123,19 @@ class Main(MainUI):
         self._abort_button.clicked.connect(self.__abort_measurement)
         self._next_button.clicked.connect(self.__increment_contact_number)
         self._sample_config.sample_selection_changed.connect(self.__sample_auto_selection)
+        self._contacts_picker.save_triggered.connect(self.__save_contacts_to_settings)
+
+    def __save_contacts_to_settings(self):
+        contacts = self._contacts_picker.contacts
+        name, okay = QInputDialog.getText(self, 'New Group', 'Enter Group Name')
+
+        if name != '' and okay:
+            result = self._sample_config.add_config(name, contacts)
+
+            if result == False:
+                error = QErrorMessage()
+                error.showMessage('Name is already in use')
+
 
     def __sample_auto_selection(self, contacts_list):
         self._contacts_picker.select_list(contacts_list)

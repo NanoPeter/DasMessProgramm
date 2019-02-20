@@ -226,6 +226,9 @@ class ContactsView(QDialog):
 
 
 class ContactsSelector(QWidget):
+
+    save_triggered = pyqtSignal()
+
     def __init__(self, parent = None):
         super().__init__(parent)
         layout = QHBoxLayout()
@@ -240,7 +243,7 @@ class ContactsSelector(QWidget):
         self._contact_label = QLabel('No Contacts')
         self._button = QPushButton('\u25bc')
         self._button.hide()
-
+        
         self._next_button = QPushButton('\u25ba')
         self._next_button.hide()
 
@@ -253,6 +256,11 @@ class ContactsSelector(QWidget):
 
         self._button.clicked.connect(self._clicked)
         self._next_button.clicked.connect(self.next)
+        self._contact_label.mouseDoubleClickEvent = self._double_clicked
+
+    def _double_clicked(self, event):
+        if len(self.contacts) > 0:
+            self.save_triggered.emit()
 
     @property
     def contacts(self):
