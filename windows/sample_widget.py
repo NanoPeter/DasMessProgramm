@@ -15,7 +15,7 @@ class ContactsView(QDialog):
         self.setGeometry(0, 0, 240, 240)
 
         self.setBackgroundRole(QPalette.Background)
-        self.setAutoFillBackground(True)
+        #self.setAutoFillBackground(True)
 
         self.setWindowFlags(Qt.FramelessWindowHint)
 
@@ -45,6 +45,23 @@ class ContactsView(QDialog):
                             dict(position=(5, 125), sector = 4, contact=7, selected=False),
         ]
 
+        self.number_of_contacts = 0
+
+        self._last_selection = []
+
+    @property
+    def number_of_contacts(self):
+        return self._number_of_active_contacts
+
+    @number_of_contacts.setter 
+    def number_of_contacts(self, value: int):
+        self.deselect()
+        self._last_selection = []
+        if value <= 0:
+            self._number_of_active_contacts = -1
+        else:
+            self._number_of_active_contacts = value
+
     @property
     def selection(self):
         sectors = ['', 'I', 'II', 'III', 'IV']
@@ -54,9 +71,10 @@ class ContactsView(QDialog):
     def leaveEvent(self, event):
         self.hide()
 
-    def _deselect(self):
+    def deselect(self):
         for contact in self._contacts:
             contact['selected'] = False
+        self.selection_changed.emit()
 
     def mousePressEvent(self, event):
         if event.button() == Qt.RightButton:
@@ -75,6 +93,17 @@ class ContactsView(QDialog):
                     #self._deselect()
                     contact['selected'] = ~contact['selected']
                     changed = True 
+
+                    if contact['selected'] and self._number_of_active_contacts > 0 and contact not in self._last_selection:
+                        if len(self._last_selection) >= self._number_of_active_contacts:
+                            self._last_selection[0]['selected'] = False
+                            self._last_selection = self._last_selection[1:]
+
+                        self._last_selection.append(contact)
+                    elif not contact['selected'] and self._number_of_active_contacts > 0:
+                        if contact in self._last_selection:
+                            self._last_selection.remove(contact)
+
                     break
 
             if changed:
@@ -134,10 +163,10 @@ class ContactsView(QDialog):
         font.setPointSize(20)
         painter.setFont(font)
 
-        painter.drawText(95, 95, 20, 20, Qt.AlignCenter, 'I')
-        painter.drawText(125,95,20,20, Qt.AlignCenter, 'II')
-        painter.drawText(125,125,20,20, Qt.AlignCenter, 'III')
-        painter.drawText(95,125,20,20, Qt.AlignCenter, 'IV')
+        painter.drawText(90, 90, 30, 30, Qt.AlignCenter, 'I')
+        painter.drawText(120,90,30,30, Qt.AlignCenter, 'II')
+        painter.drawText(120,120,30,30, Qt.AlignCenter, 'III')
+        painter.drawText(90,120,30,30, Qt.AlignCenter, 'IV')
 
         painter.restore()
 
@@ -159,16 +188,19 @@ class ContactsSelector(QWidget):
         super().__init__(parent)
         layout = QHBoxLayout()
         self._description_label = QLabel('Contacts')
+        self._description_label.hide()
         layout.addWidget(self._description_label)
 
         self._sample_dialog = ContactsView()
         self._sample_dialog.hide()
         self._sample_dialog.selection_changed.connect(self._on_selection_changed)
 
-        self._contact_label = QLabel('')
+        self._contact_label = QLabel('No Contacts')
         self._button = QPushButton('\u25bc')
+        self._button.hide()
 
         self._next_button = QPushButton('\u25ba')
+        self._next_button.hide()
 
         layout.addWidget(self._contact_label)
         layout.addStretch()
@@ -189,10 +221,25 @@ class ContactsSelector(QWidget):
         return '-'.join(self._sample_dialog.selection)
 
     def set_number_of_contacts(self, contacts: Contacts):
-        """ TODO: implement this
-            only a certain number of contacts should be allowed
-         """
-        pass
+        self._sample_dialog.deselect()
+        if contacts == Contacts.NONE:
+            self._deactivate_buttons()
+            self._sample_dialog.number_of_contacts = 0
+        else:
+            self._activate_buttons()
+            self._sample_dialog.number_of_contacts = contacts.value
+
+    def _deactivate_buttons(self):
+        self._button.hide()
+        self._next_button.hide()
+        self._description_label.hide()
+        self._contact_label.setText('No Contacts')
+
+    def _activate_buttons(self):
+        self._button.show()
+        self._next_button.show()
+        self._description_label.show()
+        self._contact_label.setText('')
 
     def _on_selection_changed(self):
         string = self.contacts_string
@@ -201,7 +248,6 @@ class ContactsSelector(QWidget):
             self._description_label.hide()
         else:
             self._description_label.show()
-
 
     def next(self):
         self._sample_dialog.next()
@@ -215,13 +261,7 @@ class ContactsSelector(QWidget):
             x = button_pos.x()
             y = button_pos.y()
 
-            w = self._button.width()
-
-            ww = self._sample_dialog.width()
-
-            new_x = x + w - ww 
-            #if new_x < 0:
-                #new_x = 0
+            new_x = x 
 
             self._sample_dialog.move(new_x, y)
             self._sample_dialog.show()
