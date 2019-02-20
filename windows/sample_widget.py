@@ -72,9 +72,51 @@ class ContactsView(QDialog):
         self.hide()
 
     def deselect(self):
+        self._last_selection = []
         for contact in self._contacts:
             contact['selected'] = False
         self.selection_changed.emit()
+
+    def _add_last_selection(self, contact):
+        if contact in self._last_selection:
+            self._last_selection.remove(contact)
+
+        if len(self._last_selection) < self._number_of_active_contacts:
+            self._last_selection.append(contact)
+        
+
+    def select(self, contact_string: str):
+        if len(self._last_selection) >= self._number_of_active_contacts:
+            return
+
+        sector = 0
+        contact = 0
+        if contact_string.startswith('IV'):
+            sector = 4
+            contact = int(contact_string[2:])
+        elif contact_string.startswith('III'):
+            sector = 3
+            contact = int(contact_string[3:])
+        elif contact_string.startswith('II'):
+            sector = 2
+            contact = int(contact_string[2:])
+        elif contact_string.startswith('I'):
+            sector = 1
+            contact = int(contact_string[1:])
+
+        for contact_item in self._contacts:
+            if contact_item['sector'] == sector and contact_item['contact'] == contact:
+                contact_item['selected'] = True
+                self._add_last_selection(contact_item)
+                self.selection_changed.emit()
+                break
+
+
+    def select_list(self, contact_list):
+        self.deselect()
+        for item in contact_list:
+            self.select(item)
+
 
     def mousePressEvent(self, event):
         if event.button() == Qt.RightButton:
@@ -248,6 +290,9 @@ class ContactsSelector(QWidget):
             self._description_label.hide()
         else:
             self._description_label.show()
+
+    def select_list(self, contact_list):
+        self._sample_dialog.select_list(contact_list)
 
     def next(self):
         self._sample_dialog.next()

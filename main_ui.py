@@ -9,6 +9,7 @@ from typing import Type
 #from windows.contacts_picker import ContactsPicker
 from windows.sample_widget import ContactsSelector
 from windows.directory_picker import DirectoryPicker
+from windows.sample_config import SampleConfig
 
 
 class MainUI(QtWidgets.QMainWindow):
@@ -39,6 +40,9 @@ class MainUI(QtWidgets.QMainWindow):
         
         self._contacts_picker.setFixedWidth(self.SIDE_BAR_WIDTH)
         self._inputs_layout.addWidget(self._contacts_picker)
+
+        self._sample_config = SampleConfig()
+        self._inputs_layout.addWidget(self._sample_config)
 
         method_layout = QtWidgets.QVBoxLayout()
         method_layout.setSpacing(3)

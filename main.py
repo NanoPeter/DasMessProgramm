@@ -122,6 +122,10 @@ class Main(MainUI):
         self._measure_button.clicked.connect(self.__start__measurement)
         self._abort_button.clicked.connect(self.__abort_measurement)
         self._next_button.clicked.connect(self.__increment_contact_number)
+        self._sample_config.sample_selection_changed.connect(self.__sample_auto_selection)
+
+    def __sample_auto_selection(self, contacts_list):
+        self._contacts_picker.select_list(contacts_list)
 
     def __measurement_method_selected(self, title, cls: AbstractMeasurement):
         for button in [self._next_button, self._abort_button, self._measure_button]:
