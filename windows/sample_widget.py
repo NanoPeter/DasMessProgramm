@@ -220,8 +220,8 @@ class ContactsSelector(QWidget):
             ww = self._sample_dialog.width()
 
             new_x = x + w - ww 
-            if new_x < 0:
-                new_x = 0
+            #if new_x < 0:
+                #new_x = 0
 
             self._sample_dialog.move(new_x, y)
             self._sample_dialog.show()
