@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 from PyQt5 import QtCore, QtWidgets, QtGui
-from PyQt5.QtWidgets import QApplication, QInputDialog, QErrorMessage
+from PyQt5.QtWidgets import QApplication, QInputDialog, QErrorMessage, QFileDialog
 
 from main_ui import MainUI
 from windows.table_window import TableWindow
@@ -124,6 +124,25 @@ class Main(MainUI):
         self._next_button.clicked.connect(self.__increment_contact_number)
         self._sample_config.sample_selection_changed.connect(self.__sample_auto_selection)
         self._contacts_picker.save_triggered.connect(self.__save_contacts_to_settings)
+
+        self._select_folder_action.triggered.connect(self._dir_picker.select_directory)
+        self._show_folder_action.triggered.connect(self._dir_picker.open_directory)
+
+        self._load_sample_config_action.triggered.connect(self._load_sample_config)
+        self._save_sample_config_action.triggered.connect(self._save_sample_config)
+
+
+    def _load_sample_config(self):
+        file_path, _ = QFileDialog.getOpenFileName(self, 'Load Sample Settings', filter = 'JSON (*.json)')
+
+        if file_path != '':
+            self._sample_config.load_from_file(file_path)
+
+    def _save_sample_config(self):
+        file_path, _ = QFileDialog.getSaveFileName(self, 'Load Sample Settings', filter = 'JSON (*.json)')
+
+        if file_path != '':
+            self._sample_config.save_to_file(file_path)
 
     def __save_contacts_to_settings(self):
         contacts = self._contacts_picker.contacts

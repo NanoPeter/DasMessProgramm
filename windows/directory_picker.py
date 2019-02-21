@@ -56,13 +56,13 @@ class DirectoryPicker(QWidget):
 
         layout.addWidget(self._directory_path)
 
-        self._directory_path.double_clicked.connect(self._select_directory)
-        self._directory_path.right_clicked.connect(self._open_directory)
+        self._directory_path.double_clicked.connect(self.select_directory)
+        self._directory_path.right_clicked.connect(self.open_directory)
 
-    def _open_directory(self):
+    def open_directory(self):
         QDesktopServices.openUrl(QUrl.fromUserInput(self.directory))
 
-    def _select_directory(self):
+    def select_directory(self):
         dir_name = QFileDialog.getExistingDirectory(self, 'Open Measurement Directory',
                                                     self.directory)
 

@@ -6,6 +6,8 @@ from datetime import datetime
 from PyQt5 import QtCore, QtWidgets, QtGui
 from typing import Type
 
+from PyQt5.QtWidgets import QAction
+
 #from windows.contacts_picker import ContactsPicker
 from windows.sample_widget import ContactsSelector
 from windows.directory_picker import DirectoryPicker
@@ -22,6 +24,8 @@ class MainUI(QtWidgets.QMainWindow):
 
     def _init_gui(self):
         self.setWindowTitle(self.TITLE)
+
+        self._init_menu_bar()
 
         central_layout = QtWidgets.QHBoxLayout()
         central_widget = QtWidgets.QWidget()
@@ -108,6 +112,35 @@ class MainUI(QtWidgets.QMainWindow):
         self._mdi.addSubWindow(self._tb_window)
 
         self._plot_windows = {}
+
+    def _init_menu_bar(self):
+        main_menu = self.menuBar()
+
+        file_menu = main_menu.addMenu('&File')
+
+        self._select_folder_action = QAction('open folder path...', self)
+        self._select_folder_action.setShortcut('Ctrl+d')
+
+        self._show_folder_action = QAction('show folder', self)
+        self._show_folder_action.setShortcut('Ctrl+e')
+
+        self._load_sample_config_action = QAction('load sample settings...', self)
+        self._load_sample_config_action.setShortcut('Ctrl+l')
+
+        self._save_sample_config_action = QAction('save sample settings...', self)
+        self._save_sample_config_action.setShortcut('Ctrl+s')
+
+        self._exit_app_action = QAction('exit', self)
+        self._exit_app_action.setShortcut('Ctrl+x')
+
+        file_menu.addAction(self._select_folder_action)
+        file_menu.addAction(self._show_folder_action)
+        file_menu.addSeparator()
+        file_menu.addAction(self._load_sample_config_action)
+        file_menu.addAction(self._save_sample_config_action)
+        file_menu.addSeparator()
+        file_menu.addAction(self._exit_app_action)
+
 
     @QtCore.pyqtSlot(QtCore.QPoint)
     def __mdi_context_menu(self, point: QtCore.QPoint):
