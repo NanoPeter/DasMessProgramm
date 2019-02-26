@@ -1,4 +1,5 @@
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QPushButton, QLabel, QDialog
+from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QPushButton, QLabel, QMainWindow, 
+                             QGroupBox)
 from PyQt5.QtGui import QPainter, QPen, QBrush, QColor, QFont
 from PyQt5.QtCore import Qt, QPoint, pyqtSignal
 from PyQt5.QtGui import QPalette
@@ -6,7 +7,7 @@ from PyQt5.QtGui import QPalette
 from measurement.measurement import Contacts
 
 
-class ContactsView(QDialog):
+class ContactsView(QMainWindow):
 
     selection_changed = pyqtSignal()
 
@@ -17,7 +18,7 @@ class ContactsView(QDialog):
         self.setBackgroundRole(QPalette.Background)
         #self.setAutoFillBackground(True)
 
-        self.setWindowFlags(Qt.FramelessWindowHint)
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
 
         self._contacts = [  dict(position=(5, 95), sector = 1, contact=7, selected=False),
                             dict(position=(5, 65), sector = 1, contact=8, selected=False),
@@ -231,7 +232,11 @@ class ContactsSelector(QWidget):
 
     def __init__(self, parent = None):
         super().__init__(parent)
+
+        self.setContentsMargins(0,0,0,0)
+
         layout = QHBoxLayout()
+        layout.setContentsMargins(0,0,0,0)
         self._description_label = QLabel('Contacts')
         self._description_label.hide()
         layout.addWidget(self._description_label)
@@ -244,21 +249,20 @@ class ContactsSelector(QWidget):
         self._button = QPushButton('\u25bc')
         self._button.hide()
         
-        self._next_button = QPushButton('\u25ba')
-        self._next_button.hide()
+        self._add_button = QPushButton('+')
+        self._add_button.hide()
 
         layout.addWidget(self._contact_label)
         layout.addStretch()
         layout.addWidget(self._button)
-        layout.addWidget(self._next_button)
+        layout.addWidget(self._add_button)
 
         self.setLayout(layout)
 
         self._button.clicked.connect(self._clicked)
-        self._next_button.clicked.connect(self.next)
-        self._contact_label.mouseDoubleClickEvent = self._double_clicked
+        self._add_button.clicked.connect(self._add)
 
-    def _double_clicked(self, event):
+    def _add(self, event):
         if len(self.contacts) > 0:
             self.save_triggered.emit()
 
@@ -281,13 +285,13 @@ class ContactsSelector(QWidget):
 
     def _deactivate_buttons(self):
         self._button.hide()
-        self._next_button.hide()
+        self._add_button.hide()
         self._description_label.hide()
         self._contact_label.setText('No Contacts')
 
     def _activate_buttons(self):
         self._button.show()
-        self._next_button.show()
+        self._add_button.show()
         self._description_label.show()
         self._contact_label.setText('')
 
@@ -314,12 +318,12 @@ class ContactsSelector(QWidget):
             x = button_pos.x()
             y = button_pos.y()
 
-            new_x = x 
+            new_x = x + self._button.width() / 2 - self._sample_dialog.width()/2
+            new_y = y + self._button.height() / 2 - self._sample_dialog.height()/2
 
-            self._sample_dialog.move(new_x, y)
-            self._sample_dialog.show()
+            self._sample_dialog.move(new_x, new_y)
             self._sample_dialog.raise_()
-
+            self._sample_dialog.show()
 
 
 

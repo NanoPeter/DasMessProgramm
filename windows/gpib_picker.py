@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QComboBox, QPushButton, QAction, QHBoxLayout
-from PyQt5.QtGui import QPixmap, QIcon
+from PyQt5.QtGui import QPixmap, QIcon, QFont
 
 from base64 import b64decode
 
@@ -16,13 +16,18 @@ class GPIBPicker(QWidget):
 
         self._combobox = QComboBox(self)
         layout.addWidget(self._combobox)
+        layout.addStretch()
 
-        pm = QPixmap()
-        pm.loadFromData(b64decode(REFRESH_ICON))
-        icon = QIcon(pm)
+        #pm = QPixmap()
+        #pm.loadFromData(b64decode(REFRESH_ICON))
+        #icon = QIcon(pm)
 
-        button = QPushButton(self)
-        button.setIcon(icon)
+        button = QPushButton('\u21bb')
+        font = button.font()
+        font.setPointSize(20)
+        font.setWeight(QFont.Bold)
+        button.setFont(font)
+        #button.setIcon(icon)
 
         button.clicked.connect(self.update_devices)
 

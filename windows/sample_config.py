@@ -32,7 +32,11 @@ class SampleConfig(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
+        self.setContentsMargins(0,0,0,0)
+
         search_layout = QHBoxLayout()
+        search_layout.setContentsMargins(0,0,0,0)
+
         self._sample_selection = QComboBox()
         self._sample_selection.currentIndexChanged.connect(self._selection_changed)
 

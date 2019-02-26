@@ -110,6 +110,10 @@ class Main(MainUI):
         self._measurement = None  # type: AbstractMeasurement
 
         self._init_gui()
+
+        for key, meas in measurement.REGISTRY.items():
+            self._dock.add_method(key, meas)
+
         self.__setup_connections()
 
         self._dir_picker.directory = self._directory_name
@@ -131,6 +135,10 @@ class Main(MainUI):
         self._load_sample_config_action.triggered.connect(self._load_sample_config)
         self._save_sample_config_action.triggered.connect(self._save_sample_config)
 
+        self._show_dock_action.triggered.connect(self._show_dock)
+
+    def _show_dock(self):
+        self._dock.show()
 
     def _load_sample_config(self):
         file_path, _ = QFileDialog.getOpenFileName(self, 'Load Sample Settings', filter = 'JSON (*.json)')

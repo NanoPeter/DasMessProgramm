@@ -7,11 +7,14 @@ from PyQt5 import QtCore, QtWidgets, QtGui
 from typing import Type
 
 from PyQt5.QtWidgets import QAction
+from PyQt5.QtCore import Qt
 
 #from windows.contacts_picker import ContactsPicker
 from windows.sample_widget import ContactsSelector
 from windows.directory_picker import DirectoryPicker
 from windows.sample_config import SampleConfig
+
+from windows.inputdock import InputDock
 
 
 class MainUI(QtWidgets.QMainWindow):
@@ -26,6 +29,11 @@ class MainUI(QtWidgets.QMainWindow):
         self.setWindowTitle(self.TITLE)
 
         self._init_menu_bar()
+
+        self._dock = InputDock()
+
+        self.addDockWidget(Qt.RightDockWidgetArea, self._dock)
+
 
         central_layout = QtWidgets.QHBoxLayout()
         central_widget = QtWidgets.QWidget()
@@ -140,6 +148,14 @@ class MainUI(QtWidgets.QMainWindow):
         file_menu.addAction(self._save_sample_config_action)
         file_menu.addSeparator()
         file_menu.addAction(self._exit_app_action)
+
+
+        window_menu = main_menu.addMenu('Window')
+        
+        self._show_dock_action = QAction('show Input Dock', self)
+        self._show_dock_action.setShortcut('Ctrl+i')
+
+        window_menu.addAction(self._show_dock_action)
 
 
     @QtCore.pyqtSlot(QtCore.QPoint)
